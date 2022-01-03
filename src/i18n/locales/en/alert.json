@@ -1,0 +1,21 @@
+{
+    "ERROR": "An error has occurred. ",
+    "ENTER_NAME": "Please enter your name.",
+    "ENTER_NAME_MORE_4": "Please enter your name in at least 4 characters.",
+    "ENTER_DESCRIPTION": "Please enter the explanation.",
+    "SELECT_COLLECTION": "Choose a collection.",
+    "PRICE_NEEDED": "Please enter the price.",
+    "ROYALTIY_VALUE_NOT_RIGHT": "The value of royalties is not correct. (Number between 0 and 100)",
+    "ERROR_FROM_APPROVAL": "An error occurred during the approval request.",
+    "ERROR_FROM_TRANSACTION": "An error occurred during the transaction.",
+    "COLLECTION_NAME_NEEDED": "Enter the collection name.",
+    "COLLECTION_NAME_MORE_4": "Please enter a collection name of at least 4 characters.",
+    "SYMBOL_NEEDED": "Enter the symbol.",
+    "COLLECTION_DESCRIPTION_NEEDED": "Enter the collection introduction.",
+    "SELECT_CATEGORY": "Please select a category.",
+    "COLLECTION_ADDED": "The collection has been added.",
+    "COLLECTION_EDITED": "The collection has been modified.",
+    "COLLECTION_CANT_ADDED": "Collection cannot be added.",
+    "COLLECTION_ALREADY_ADDED": "This collection has already been added.",
+    "METAMASK_NOT_INSTALLED": "Metamask is not installed."
+}
