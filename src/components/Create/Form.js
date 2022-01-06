@@ -316,7 +316,7 @@ const Form = ({bundle}) => {
 
   const [params, setParams] = useState({
     chainId: CHAIN_ID,
-    platform: CHAIN_PLATFORM
+    platform: CHAIN_PLATFORM,
   });
 
   const [preview, setPreview] = useState('');
@@ -324,12 +324,20 @@ const Form = ({bundle}) => {
   const [levels, setLevels] = useState([BASE_LEVEL_ENTITY]);
 
   const disableCreate = useMemo(() => {
-    return !params.name
-      || !params.attachment
-      || !params.description
-      || !params.chainId
-      || !params.platform
-  }, [params]);
+    if(isPutOnMarket) {
+      if(!params.price || !params.royalty_ratio || !params.royalty_to) {
+        return true;
+      }
+    }
+
+    if(!params.chainId || !params.platform) {
+      return true;
+    }
+
+    if(!params.name || !params.attachment || !params.description || !params.collection)  {
+      return true;
+    }
+  }, [params, isPutOnMarket]);
 
   const handleAddSpec = useCallback(() => {
     setSpecs(specs => [...specs, BASE_SPEC_ENTITY]);
@@ -355,6 +363,13 @@ const Form = ({bundle}) => {
     if (address) {
       dispatch(fetchMyCollections({address}));
     }
+
+    // set default royalty receiver address
+    setParams(produce(d => {
+      if(!d.royalty_to) {
+        d.royalty_to = address;
+      }
+    }));
   }, [address]);
 
   // 컬렉션 목록 가공
@@ -533,7 +548,7 @@ const Form = ({bundle}) => {
           <input type="file" onChange={handleChangeFile}/>
         </DragFileArea>
         <UploadDescription>
-          <div className="title">Image, Video, Audio or 3D Model</div>
+          <div className="title">Image, Video, Audio or 3D Model *</div>
           <div className="attributes">
             <div className="type">File type</div>
             <div className="value">JPG, PNG, GIF, SVG, MP4, WEBM</div>
@@ -581,7 +596,7 @@ const Form = ({bundle}) => {
       {
         (isPutOnMarket && marketType === ORDER_FIXED_PRICE) && (
           <PriceSection>
-            <SectionTitle>{t('PRICE')}</SectionTitle>
+            <SectionTitle>{t('PRICE') + ' *'}</SectionTitle>
             <FlexBox centerHorizontal>
               <PriceInput priceName={"price"} onChangePrice={handleChange} onChangeUnit={handleChangeUnit}/>
             </FlexBox>
@@ -594,7 +609,7 @@ const Form = ({bundle}) => {
       {
         isPutOnMarket && (
           <PriceSection>
-            <SectionTitle>{t('ROYALTIES')}</SectionTitle>
+            <SectionTitle>{t('ROYALTIES') + ' *'}</SectionTitle>
             <FlexBox centerHorizontal>
               <UnderlineInput type="number" placeholder={t('ENTER_1_100')} name="royalty_ratio"
                               onChange={handleChange}/>
@@ -602,23 +617,23 @@ const Form = ({bundle}) => {
             </FlexBox>
             <FlexBox centerHorizontal>
               <WalletAddressButton>
-                <input placeholder={t('WALLET_ADDRESS')} name="royalty_to" defaultValue={address} onChange={handleChange}/>
+                <input placeholder={t('WALLET_ADDRESS') + ' *'} name="royalty_to" defaultValue={address} onChange={handleChange}/>
               </WalletAddressButton>
             </FlexBox>
           </PriceSection>
         )
       }
       <Section>
-        <TextField label={t('NAME')} name="name" onChange={handleChange}/>
+        <TextField label={t('NAME') + ' *'} name="name" onChange={handleChange}/>
       </Section>
       <Section>
-        <TextField label={t('DESCRIPTION')} name="description" onChange={handleChange}/>
+        <TextField label={t('DESCRIPTION') + ' *'} name="description" onChange={handleChange}/>
       </Section>
       <Section>
         <TextField label={t('EXTERNAL_LINK')} type={"url"} name="external_link" onChange={handleChange}/>
       </Section>
       <Section>
-        <SectionTitle>{t('COLLECTION')}</SectionTitle>
+        <SectionTitle>{t('COLLECTION') + ' *'}</SectionTitle>
         <CollectionDropdown
           size={SIZE_BIG}
           items={collectionsForDropdown}
@@ -665,10 +680,12 @@ const Form = ({bundle}) => {
         <AddFormButton onClick={handleAddLevel}><img src={"/img/ic_create_add_form.svg"}/>{t('ADD_LEVEL')}</AddFormButton>
       </Section>
       <Section>
+        {/*
         <SectionTitle>
           {t('UNLOCK_CONTENT_AFTER_BUY')}
           <Switch checked={isUnlockContent} onChange={setUnlockContent}/>
         </SectionTitle>
+        */}
         {
           isUnlockContent && (
             <TextField

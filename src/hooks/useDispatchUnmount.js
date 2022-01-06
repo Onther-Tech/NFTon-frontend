@@ -5,7 +5,6 @@ const useDispatchUnmount = (action) => {
   const dispatch = useDispatch();
   useEffect(() => {
     return () => {
-      console.log('clear')
       dispatch(action());
     }
   }, []);

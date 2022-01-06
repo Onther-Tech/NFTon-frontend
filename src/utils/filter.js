@@ -35,9 +35,9 @@ export const filterByCategory = (arr, categoryNames) => {
   }
 
   return arr.filter(x => {
-    if (typeof x.CategoryName === 'string') {
+    if (typeof x.order?.CategoryName === 'string') {
       for (let categoryName of categoryNames) {
-        return x.CategoryName.toLowerCase() === categoryName.toLowerCase()
+        return x.order?.CategoryName.toLowerCase() === categoryName.toLowerCase()
       }
     }
   });
@@ -124,8 +124,6 @@ export const filterByPriceRange = (arr, from, to) => {
 
 export const filterAndSortList = (list, filter, sortType, searchText) => {
   let arr = [...list];
-
-  console.log(filter);
 
   if (searchText) {
     arr = filterByName(arr, searchText);

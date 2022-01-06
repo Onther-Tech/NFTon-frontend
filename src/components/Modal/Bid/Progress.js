@@ -9,8 +9,14 @@ const ProgressList = styled.div`
 const ProgressHeaderWrapper = styled.div`
   display: flex;
   justify-content: space-between;
+  align-items: center;
   margin: 30px 0;
 
+  img {
+    width: 38px;
+    height: 38px;
+  }
+  
   img.spin {
     animation: ${Spin} 1s linear infinite;
   }
@@ -37,7 +43,7 @@ const Progress = ({content, onConfirm, onClose}) => {
           </ProgressHeader>
           {
             content.approved ? (
-              <img src="/img/ic_modal_complete.gif"/>
+              <img src="/img/ic_spinner_done.svg"/>
             ) : (
               <img className="spin" src="/img/ic_spinner.svg"/>
             )
@@ -53,9 +59,9 @@ const Progress = ({content, onConfirm, onClose}) => {
               {
                 content.approved && (
                   content.signed ? (
-                    <img src="/img/ic_modal_complete.gif"/>
+                    <img src="/img/ic_spinner_done.svg"/>
                   ) : (
-                    <img className="spin" src="/img/ic_modal_loading.gif"/>
+                    <img className="spin" src="/img/ic_spinner.svg"/>
                   )
                 )
               }

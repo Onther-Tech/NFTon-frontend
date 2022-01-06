@@ -1,7 +1,7 @@
 import axios from "axios";
 import {getAxios} from "../../utils/axios";
 
-const UtilsAPI = { 
+const UtilsAPI = {
   ipfs: async ({uploadFile}) => {
     const form = new FormData();
     form.append('uploadFile', uploadFile);

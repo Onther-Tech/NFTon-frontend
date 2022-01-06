@@ -25,6 +25,7 @@ import useOrderFavorite from "../hooks/useOrderFavorite";
 import useProtocolFeeRatio from "../hooks/useProtocolFeeRatio";
 import OrderProgress from "../components/Detail/OrderProgress";
 import {ORDER_TYPE_CHECKOUT} from "../constants/sale";
+import {getAddress} from "../utils/metamask";
 
 const Header = styled(FlexBox)`
   display: flex;
@@ -340,6 +341,7 @@ const Detail = () => {
   const usdPrice = useGetUsdPrice(price, unit);
 
   const isMakerOwned = useMemo(() => isSameAddress(owner, maker), [owner, maker]);
+  const isMine = useMemo(() => isSameAddress(maker, getAddress()), [maker]);
 
   const {isFavoriteOrder, onClickFavorite} = useOrderFavorite(idorders, () => {
     dispatch(fetchOrderByAddress({contractAddress: contract, tokenId: tokenId}));
@@ -515,7 +517,7 @@ const Detail = () => {
                   {/*<img src={"/img/ic_detail_unit_arrowdown.svg"}/>*/}
                 </FlexBox>
                 {
-                  isMakerOwned && (
+                  (isMakerOwned && !isMine) && (
                     <FlexBox className="buttons">
                       <Button accent onClick={handleBuy}>Buy Now</Button>
                       {/*<Button>Make offer</Button>*/}
