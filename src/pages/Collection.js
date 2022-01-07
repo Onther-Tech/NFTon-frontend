@@ -14,6 +14,7 @@ import {getTokenInfo, getTokensOfCollection, getTotalSupplyOfCollection} from ".
 import produce from "immer";
 import numeral from 'numeral';
 import {filterAndSortList} from "../utils/filter";
+import useDispatchUnmount from "../hooks/useDispatchUnmount";
 
 const TopCover = styled.div`
   width: 100%;
@@ -191,6 +192,8 @@ const Collection = () => {
   const [currentTab, setCurrentTab] = useState(0);
   const [searchText, setSearchText] = useState('');
   const [totalSupply, setTotalSupply] = useState(0);
+
+  useDispatchUnmount(collectionActions.clearCollection);
 
   useEffect(() => {
     if (!contract) {

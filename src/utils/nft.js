@@ -25,7 +25,15 @@ import numeral from "numeral";
 import axios from "axios";
 import {isNull} from "./index";
 
-const provider = new ethers.providers.Web3Provider(window.ethereum);
+let provider;
+
+if (window.ethereum) {
+  provider = new ethers.providers.Web3Provider(window.ethereum);
+  console.log('set provider: window.ethereum');
+} else {
+  provider = new ethers.providers.JsonRpcProvider(process.env.REACT_APP_HTTP_RPC);
+  console.log('set provider: http rpc');
+}
 
 function AssetType(assetClass, data) {
   return {assetClass, data}
@@ -332,17 +340,19 @@ export const getTokenURI = async (contractAddress, tokenId) => {
   return tokenURI;
 }
 
+export const hasERC721Interface = async (contractAddress) => {
+  const contract = new ethers.Contract(contractAddress, brandCollectionABI, provider);
+  return await contract.supportsInterface('0x80ac58cd');
+}
+
 export const getCollectionInfo = async (contractAddress) => {
   const collection = {};
 
   const collectionContract = new ethers.Contract(contractAddress, brandCollectionABI, provider);
-  const erc721Interface = await collectionContract['_INTERFACE_ID_ERC721']();
 
-  if (erc721Interface === '0x80ac58cd') {
-    collection.contract = contractAddress;
-    collection.name = await collectionContract.name();
-    collection.symbol = await collectionContract.symbol();
-  }
+  collection.contract = contractAddress;
+  collection.name = await collectionContract.name();
+  collection.symbol = await collectionContract.symbol();
 
   return collection;
 }

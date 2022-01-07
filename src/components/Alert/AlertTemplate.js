@@ -69,6 +69,8 @@ const LoadingWrapper = styled.div`
   margin: 50px 0;
 
   img {
+    width: 38px;
+    height: 38px;
     animation: ${Spin} 1s linear infinite;
   }
 `
@@ -85,7 +87,7 @@ const AlertTemplate = ({style, options, message, close}) => {
     if (message.title) {
       return message.title;
     } else if (options.type === 'error') {
-      return 'Error';
+      return t('ERROR');
     }
   }, [message, options]);
 
@@ -122,7 +124,7 @@ const AlertTemplate = ({style, options, message, close}) => {
         {
           message.loading ? (
             <LoadingWrapper>
-              <img src="/img/ic_modal_loading.gif"/>
+              <img src="/img/ic_spinner.svg"/>
             </LoadingWrapper>
           ) : (
             buttonText && (

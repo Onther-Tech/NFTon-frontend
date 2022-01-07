@@ -15,9 +15,7 @@ export const requestAccounts = async () => {
 }
 
 export const getAddress = () => {
-  requireMetaMask();
-
-  return window.ethereum.selectedAddress;
+  return window.ethereum && window.ethereum.selectedAddress;
 }
 
 export const personalSign = async (message) => {

@@ -61,6 +61,7 @@ const Marketplace = () => {
     dispatch(fetchOrders({
       chainId: process.env.REACT_APP_CHAIN_ID,
       platform: process.env.REACT_APP_CHAIN_PLATFORM,
+      includeCategoryName: 1,
     }));
 
     return () => {
@@ -84,7 +85,7 @@ const Marketplace = () => {
     const newFilter = {...filter};
 
     if (categoryName) {
-      newFilter.categories = {categoryName: true};
+      newFilter.categories = {[categoryName]: true};
     }
 
     setFilteredList(filterAndSortList(list, newFilter, sortType));

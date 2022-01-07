@@ -63,7 +63,7 @@ const TokenInfo = ({contractAddress, tokenId, tokenStandard, blockchain}) => {
     <Wrapper>
       <Row>
         <label>Contract Address</label>
-        <span><a href={scanLink}>{contractAddress}</a></span>
+        <span><a target="_blank" href={scanLink}>{contractAddress}</a></span>
       </Row>
       <Row>
         <label>Token ID</label>

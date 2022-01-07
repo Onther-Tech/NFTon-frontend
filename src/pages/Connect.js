@@ -73,6 +73,7 @@ const Connect = () => {
   const handleConnectMetamask = useCallback(() => {
     if (!isMetaMask()) {
       alert.error(t('METAMASK_NOT_INSTALLED'));
+      window.open('https://chrome.google.com/webstore/detail/metamask/nkbihfbeogaeaoehlefnkodbefgpgknn', '_blank');
       return;
     }
 

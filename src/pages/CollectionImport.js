@@ -9,9 +9,9 @@ import GradientButton from "../components/Widgets/GradientButton";
 import styled from "styled-components";
 import {isAddress} from "web3-utils";
 import {linkContract} from "../reducers/collection";
-import {getCollectionInfo} from "../utils/nft";
+import {getCollectionInfo, hasERC721Interface} from "../utils/nft";
 import {useAlert} from "react-alert";
-import { useTranslation } from 'react-i18next';
+import {useTranslation} from 'react-i18next';
 
 const ImportButton = styled(GradientButton)`
   margin-top: 60px;
@@ -23,38 +23,48 @@ const CollectionImport = ({}) => {
   const alert = useAlert();
 
   useWallet(true);
-  const { t }  = useTranslation(['common', 'alert']);
+  const {t} = useTranslation(['common', 'alert']);
 
   const [contractAddress, setContractAddress] = useState('');
   const disabled = useMemo(() => !isAddress(contractAddress), [contractAddress]);
 
   const handleChange = useCallback((e) => {
-    setContractAddress(e.target.value);
+    setContractAddress(e.target.value.replace(/ /g, ''));
   }, []);
 
   const handleImport = useCallback(() => {
-    getCollectionInfo(contractAddress).then(async ({name}) => {
-      const {payload, error} = await dispatch(linkContract({
-        chainId: process.env.REACT_APP_CHAIN_ID,
-        platform: process.env.REACT_APP_CHAIN_PLATFORM,
-        contract: contractAddress,
-        name: name
-      }));
-
-      if (error) {
-        alert.error(t('COLLECTION_CANT_ADDED'));
-        throw error;
+    hasERC721Interface(contractAddress).then((flag) => {
+      if (!flag) {
+        alert.error("This contract is not ERC721 standard.");
+        return;
       }
 
-      if (payload.success) {
-        alert.error(t('COLLECTION_ADDED'));
-      } else if (payload.message === 'already existed') {
-        alert.error(t('COLLECTION_ALREADY_ADDED'));
-      }
+      getCollectionInfo(contractAddress).then(async ({name}) => {
+        const {payload, error} = await dispatch(linkContract({
+          chainId: process.env.REACT_APP_CHAIN_ID,
+          platform: process.env.REACT_APP_CHAIN_PLATFORM,
+          contract: contractAddress,
+          name: name
+        }));
 
-      setContractAddress('');
-    })
-  }, []);
+        if (error) {
+          alert.error(t('COLLECTION_CANT_ADDED'));
+          throw error;
+        }
+
+        if (payload.success) {
+          alert.show(t('COLLECTION_ADDED'));
+        } else if (payload.message === 'already existed') {
+          alert.error(t('COLLECTION_ALREADY_ADDED'));
+        }
+
+        setContractAddress('');
+      }).catch(e => {
+        alert.error(e.message);
+      })
+    });
+
+  }, [contractAddress]);
 
   return (
     <PageWrapper hasTopNav leftMargin={'200px'}>
