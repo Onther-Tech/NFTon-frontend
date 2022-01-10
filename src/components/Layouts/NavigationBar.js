@@ -1,5 +1,6 @@
 import styled from "styled-components";
-import {Link, useLocation} from "react-router-dom";
+import {Link, useLocation, Image} from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 
 export const HEIGHT = '70px';
 
@@ -89,6 +90,11 @@ const Menu = styled.div`
   justify-content: flex-end;
   user-select: none;
 
+  .flag {
+    width: 30px;
+    cursor: pointer;
+  }
+
   a {
     padding: 0 15px;
     color: #ffffff;
@@ -129,8 +135,18 @@ const StyledLink = styled(Link)`
   }
 `;
 
+
 const NavigationBar = () => {
   const {pathname} = useLocation();
+  const { i18n } = useTranslation();
+
+  const changeLanguage = () => {
+    if (i18n.language === 'ko') {
+      i18n.changeLanguage("en");
+    } else {
+      i18n.changeLanguage("ko");
+    }
+  }
 
   return (
     <Wrapper>
@@ -150,8 +166,11 @@ const NavigationBar = () => {
           <StyledLink to={"/community"} selected={pathname.startsWith('/community')}>Community</StyledLink>
           <StyledLink to={"/create"} selected={pathname.startsWith('/create')}>Create</StyledLink>
           {/*<Link to={"/cart"} ><img src={`/img/ic_nav_cart${pathname.startsWith('/cart') ? '_on' : ''}.png`}/></Link>*/}
-          <Link to={"/profile"}><img
-            src={`/img/ic_nav_user${pathname.startsWith('/profile') ? '_on' : ''}.png`}/></Link>
+          <Link to={"/profile"}>
+            <img src={`/img/ic_nav_user${pathname.startsWith('/profile') ? '_on' : ''}.png`} />
+          </Link>
+          <img className="flag" onClick={changeLanguage} src={`/img/ic_nav_flag_${i18n.language}.png`}/>
+
         </Menu>
       </Content>
     </Wrapper>
