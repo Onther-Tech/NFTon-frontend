@@ -17,5 +17,6 @@
     "COLLECTION_EDITED": "The collection has been modified.",
     "COLLECTION_CANT_ADDED": "Collection cannot be added.",
     "COLLECTION_ALREADY_ADDED": "This collection has already been added.",
-    "METAMASK_NOT_INSTALLED": "Metamask is not installed."
+    "METAMASK_NOT_INSTALLED": "Metamask is not installed.",
+    "WALLET_NETWORK_NOT_VALID": "Your wallet is connected to the test network, please switch to testnets.nfton.world"
 }

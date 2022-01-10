@@ -26,17 +26,17 @@ import useProtocolFeeRatio from "../hooks/useProtocolFeeRatio";
 import OrderProgress from "../components/Detail/OrderProgress";
 import {ORDER_TYPE_CHECKOUT} from "../constants/sale";
 import {getAddress} from "../utils/metamask";
+import ContentPreview from "../components/Widgets/ContentPreview";
 
 const Header = styled(FlexBox)`
   display: flex;
-  gap: 95px;
-  padding-left: 72px;
+  gap: 70px;
   margin: 30px 0 95px;
 `;
 
-const ItemImage = styled.img`
-  width: 509px;
-  height: 509px;
+const ItemPreview = styled.div`
+  width: 559px;
+  height: 559px;
   border-radius: 25px;
 `;
 
@@ -240,7 +240,7 @@ const OwnerWrapper = styled(FlexBox)`
 
 const Content = styled(FlexBox)`
   align-items: flex-start;
-  gap: 24px;
+  gap: 25px;
 
   > div {
     flex: 1;
@@ -330,6 +330,7 @@ const Detail = () => {
     idorders,
     name,
     image,
+    type,
     description,
     attributes,
     viewCount,
@@ -396,26 +397,15 @@ const Detail = () => {
       levels: []
     };
 
-    if (attributes && attributes.length > 0) {
-      const entries = Object.entries(attributes[0]);
-
-      for (let [k, v] of entries) {
-        if (k === 'level' && Array.isArray(v)) {
-          for (let level of v) {
-            for (let key in level) {
-              result.levels.push({
-                name: key,
-                level: level[key][0],
-                max: level[key][1]
-              });
-            }
-          }
+    if (Array.isArray(attributes)) {
+      attributes.forEach((v) => {
+        if (typeof v.value === 'number') {
+          result.levels.push(v);
         } else {
-          result.properties.push({key: k, value: v});
+          result.properties.push(v);
         }
-      }
+      });
     }
-
     return result;
   }, [attributes]);
 
@@ -467,7 +457,9 @@ const Detail = () => {
     <PageWrapper hasTopNav>
       <GradientTop color={"#929292"}/>
       <Header>
-        <ItemImage src={image}/>
+        <ItemPreview>
+          <ContentPreview type={type} src={image} controls/>
+        </ItemPreview>
         <ItemSummary>
           <FlexBox>
             <CollectionName>
@@ -548,8 +540,7 @@ const Detail = () => {
             <PropertiesGrid>
               {
                 properties.map((x, i) => (
-                  <Property key={i} type={x.key}
-                            name={typeof x.value === 'string' ? x.value : JSON.stringify(x.value)}/>
+                  <Property key={i} type={x.trait_type} value={x.value}/>
                 ))
               }
             </PropertiesGrid>
@@ -559,7 +550,7 @@ const Detail = () => {
             <div>
               {
                 levels.map((x, i) => (
-                  <Level key={i} name={x.name} level={x.level} max={x.max}/>
+                  <Level key={i} type={x.trait_type} value={x.value} max={x.max_value}/>
                 ))
               }
             </div>

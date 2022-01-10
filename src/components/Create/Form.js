@@ -21,7 +21,7 @@ import {commonCollection, TOKEN_BASE_URI} from "../../constants/contract";
 import {collectionState, fetchMyCollections} from "../../reducers/collection";
 import {userState} from "../../reducers/user";
 import {useAlert} from "react-alert";
-import { useTranslation } from 'react-i18next';
+import {useTranslation} from 'react-i18next';
 
 const Wrapper = styled.div`
   width: 752px;
@@ -302,7 +302,7 @@ const Form = ({bundle}) => {
   const history = useHistory();
   const dispatch = useDispatch();
   const alert = useAlert();
-  const { t }  = useTranslation(['common','alert']);
+  const {t} = useTranslation(['common', 'alert']);
 
   const {address} = useSelector(userState);
   const {loading} = useSelector(mintState);
@@ -324,17 +324,17 @@ const Form = ({bundle}) => {
   const [levels, setLevels] = useState([BASE_LEVEL_ENTITY]);
 
   const disableCreate = useMemo(() => {
-    if(isPutOnMarket) {
-      if(!params.price || !params.royalty_ratio || !params.royalty_to) {
+    if (isPutOnMarket) {
+      if (!params.price || !params.royalty_ratio || !params.royalty_to) {
         return true;
       }
     }
 
-    if(!params.chainId || !params.platform) {
+    if (!params.chainId || !params.platform) {
       return true;
     }
 
-    if(!params.name || !params.attachment || !params.description || !params.collection)  {
+    if (!params.name || !params.attachment || !params.description || !params.collection) {
       return true;
     }
   }, [params, isPutOnMarket]);
@@ -366,7 +366,7 @@ const Form = ({bundle}) => {
 
     // set default royalty receiver address
     setParams(produce(d => {
-      if(!d.royalty_to) {
+      if (!d.royalty_to) {
         d.royalty_to = address;
       }
     }));
@@ -393,26 +393,29 @@ const Form = ({bundle}) => {
 
   // specs, levels 를 attributes 로 변환
   useEffect(() => {
-    const attributes = {};
+    const attributes = [];
 
     for (let spec of specs) {
-      if (!spec.key) {
+      if(!spec.key || typeof spec.value === "undefined") {
         continue;
       }
 
-      attributes[spec.key] = spec.value;
+      attributes.push({
+        trait_type: spec.key,
+        value: spec.value.toString()
+      });
     }
 
     if (levels.length > 0 && !!levels[0].name) {
-      attributes.level = [];
-
       for (let level of levels) {
-        if (!level.name) {
+        if (!level.name || Number.isNaN(level.level) || Number.isNaN(level.max)) {
           continue;
         }
 
-        attributes.level.push({
-          [level.name]: [level.level, level.max]
+        attributes.push({
+          trait_type: level.name,
+          value: Number(level.level),
+          max_value: Number(level.max)
         });
       }
     }
@@ -483,7 +486,7 @@ const Form = ({bundle}) => {
     dispatch(mints(params)).then(async ({payload, error}) => {
       if (error) {
         throw error;
-      } else if(!payload.success) {
+      } else if (!payload.success) {
         return;
       }
 
@@ -507,11 +510,11 @@ const Form = ({bundle}) => {
           const jsonBody = await makeOrder(collection, tokenId, metadata, marketType, params.price, params.unit);
           const {payload, error} = await dispatch(registerOrder(jsonBody));
 
-          if(error) {
+          if (error) {
             throw error;
-          } else if(!payload.success) {
+          } else if (!payload.success) {
             return;
-          } else if(Array.isArray(payload.data)) {
+          } else if (Array.isArray(payload.data)) {
             order = payload.data[0];
           }
         }
@@ -617,7 +620,8 @@ const Form = ({bundle}) => {
             </FlexBox>
             <FlexBox centerHorizontal>
               <WalletAddressButton>
-                <input placeholder={t('WALLET_ADDRESS') + ' *'} name="royalty_to" defaultValue={address} onChange={handleChange}/>
+                <input placeholder={t('WALLET_ADDRESS') + ' *'} name="royalty_to" defaultValue={address}
+                       onChange={handleChange}/>
               </WalletAddressButton>
             </FlexBox>
           </PriceSection>
@@ -654,7 +658,8 @@ const Form = ({bundle}) => {
             </MultipleInputWrapper>
           ))
         }
-        <AddFormButton onClick={handleAddSpec}><img src={"/img/ic_create_add_form.svg"}/>{t('ADD_PROPERTY')}</AddFormButton>
+        <AddFormButton onClick={handleAddSpec}><img src={"/img/ic_create_add_form.svg"}/>{t('ADD_PROPERTY')}
+        </AddFormButton>
       </Section>
       <Section>
         <TextFieldLabel>{t('LEVEL')}</TextFieldLabel>
@@ -669,15 +674,18 @@ const Form = ({bundle}) => {
                          onChange={(e) => handleChangeLevel(i, 'name', e.target.value)}/>
               <LevelValues>
                 <TextField placeholder={"3"}
+                           type={"number"}
                            onChange={(e) => handleChangeLevel(i, 'level', e.target.value)}/>
                 <div className="of">of</div>
                 <TextField placeholder={"5"}
+                           type={"number"}
                            onChange={(e) => handleChangeLevel(i, 'max', e.target.value)}/>
               </LevelValues>
             </MultipleInputWrapper>
           ))
         }
-        <AddFormButton onClick={handleAddLevel}><img src={"/img/ic_create_add_form.svg"}/>{t('ADD_LEVEL')}</AddFormButton>
+        <AddFormButton onClick={handleAddLevel}><img src={"/img/ic_create_add_form.svg"}/>{t('ADD_LEVEL')}
+        </AddFormButton>
       </Section>
       <Section>
         {/*

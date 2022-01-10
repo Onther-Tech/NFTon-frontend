@@ -6,7 +6,7 @@ export const HEIGHT = '70px';
 
 const Wrapper = styled.nav`
   width: 100%;
-  min-width: 1162px;
+  min-width: 1140px;
   height: ${HEIGHT};
   backdrop-filter: blur(86px);
   position: absolute;
@@ -31,7 +31,7 @@ const Wrapper = styled.nav`
 `;
 
 const Content = styled.div`
-  width: 1162px;
+  width: 1140px;
   margin: 0 auto;
   padding-left: 20px;
   display: flex;

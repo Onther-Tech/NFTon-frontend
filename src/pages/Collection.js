@@ -18,7 +18,7 @@ import useDispatchUnmount from "../hooks/useDispatchUnmount";
 
 const TopCover = styled.div`
   width: 100%;
-  min-width: 1162px;
+  min-width: 1140px;
   height: 368px;
   display: block;
   position: absolute;
