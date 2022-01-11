@@ -18,5 +18,7 @@
     "COLLECTION_CANT_ADDED": "Collection cannot be added.",
     "COLLECTION_ALREADY_ADDED": "This collection has already been added.",
     "METAMASK_NOT_INSTALLED": "Metamask is not installed.",
+    "NOT_ALLOWED_FILE_TYPE": "This file type is not allowed.",
+    "NOT_ALLOWED_FILE_SIZE_40MB": "The file size cannot exceed 40MB.",
     "WALLET_NETWORK_NOT_VALID": "Your wallet is connected to the test network, please switch to testnets.nfton.world"
 }

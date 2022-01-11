@@ -22,6 +22,7 @@ import {collectionState, fetchMyCollections} from "../../reducers/collection";
 import {userState} from "../../reducers/user";
 import {useAlert} from "react-alert";
 import {useTranslation} from 'react-i18next';
+import ContentPreview from "../Widgets/ContentPreview";
 
 const Wrapper = styled.div`
   width: 752px;
@@ -68,15 +69,6 @@ const DragFileArea = styled.div`
   position: relative;
   overflow: hidden;
 
-  img {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
   > div {
     line-height: 38px;
 
@@ -89,6 +81,17 @@ const DragFileArea = styled.div`
     &:nth-child(2) {
       font-size: 18px;
       color: #6D84FF;
+    }
+  }
+  
+  .preview {
+    * {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
   }
 
@@ -297,6 +300,15 @@ const BASE_LEVEL_ENTITY = {
 
 const CHAIN_PLATFORM = process.env.REACT_APP_CHAIN_PLATFORM;
 const CHAIN_ID = process.env.REACT_APP_CHAIN_ID;
+const ACCEPT_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/svg+xml',
+  'video/mp4',
+  'video/web'
+];
+const ACCEPT_MAX_SIZE_MB = 40;
 
 const Form = ({bundle}) => {
   const history = useHistory();
@@ -320,6 +332,7 @@ const Form = ({bundle}) => {
   });
 
   const [preview, setPreview] = useState('');
+  const [previewType, setPreviewType] = useState('');
   const [specs, setSpecs] = useState([BASE_SPEC_ENTITY]);
   const [levels, setLevels] = useState([BASE_LEVEL_ENTITY]);
 
@@ -349,12 +362,30 @@ const Form = ({bundle}) => {
 
   const handleChangeFile = useCallback((e) => {
     const file = e.target.files[0];
+
+    if (!file) {
+      setParams(params => ({...params, attachment: null}));
+      return;
+    }
+
+    if (!ACCEPT_TYPES.includes(file.type)) {
+      alert.error(t('NOT_ALLOWED_FILE_TYPE'));
+      return;
+    }
+
+    if (file.size / 1024 / 1024 > ACCEPT_MAX_SIZE_MB) {
+      alert.error(t('NOT_ALLOWED_FILE_SIZE_40MB'));
+      return;
+    }
+
     setParams(params => ({...params, attachment: file}));
+
     if (file) {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => {
         setPreview(reader.result);
+        setPreviewType(file.type);
       };
     }
   }, []);
@@ -396,7 +427,7 @@ const Form = ({bundle}) => {
     const attributes = [];
 
     for (let spec of specs) {
-      if(!spec.key || typeof spec.value === "undefined") {
+      if (!spec.key || typeof spec.value === "undefined") {
         continue;
       }
 
@@ -536,7 +567,6 @@ const Form = ({bundle}) => {
     });
   }, [alert, params, isPutOnMarket, marketType]);
 
-
   return (
     <Wrapper>
       <UploadSection>
@@ -545,10 +575,13 @@ const Form = ({bundle}) => {
           <div>or browse</div>
           {
             preview && (
-              <img src={preview}/>
+              <div className={"preview"}>
+                <ContentPreview type={previewType} src={preview} />
+              </div>
             )
           }
-          <input type="file" onChange={handleChangeFile}/>
+          <input type="file" accept={ACCEPT_TYPES.join(',')}
+                 onChange={handleChangeFile}/>
         </DragFileArea>
         <UploadDescription>
           <div className="title">Image, Video, Audio or 3D Model *</div>
@@ -558,7 +591,7 @@ const Form = ({bundle}) => {
           </div>
           <div className="attributes">
             <div className="type">Max Size</div>
-            <div className="value">40MB</div>
+            <div className="value">{ACCEPT_MAX_SIZE_MB}MB</div>
           </div>
         </UploadDescription>
       </UploadSection>

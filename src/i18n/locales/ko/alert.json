@@ -18,5 +18,7 @@
     "COLLECTION_CANT_ADDED": "컬렉션을 추가할 수 없습니다.",
     "COLLECTION_ALREADY_ADDED": "이미 추가된 컬렉션입니다.",
     "METAMASK_NOT_INSTALLED": "메타마스크가 설치되어 있지 않습니다.",
+    "NOT_ALLOWED_FILE_TYPE": "허용되지 않은 파일 유형입니다.",
+    "NOT_ALLOWED_FILE_SIZE_40MB": "파일의 용량은 40MB를 초과할 수 없습니다.",
     "WALLET_NETWORK_NOT_VALID": "지갑이 테스트 네트워크에 연결되어 있습니다, testnet.nfton.world 로 접속해주세요."
 }
