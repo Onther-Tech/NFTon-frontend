@@ -1,6 +1,7 @@
 import styled from "styled-components";
 import {useMemo} from "react";
 import FlexBox from "../FlexBox";
+import {isNull} from "../../utils";
 
 const Wrapper = styled.div`
   padding: 12px 20px;
@@ -14,7 +15,7 @@ const Wrapper = styled.div`
   }
 `;
 
-const NameText = styled.div`
+const TypeText = styled.div`
   font-size: 18px;
   line-height: 23px;
   font-weight: 600;
@@ -50,18 +51,32 @@ const Gauge = styled.div`
   }
 `;
 
-const Level = ({name, level, max}) => {
+const Level = ({type, value, max}) => {
   const percentage = useMemo(() => {
-    return Math.floor(level / max * 100);
-  }, [level, max]);
+    return Math.floor(value / max * 100);
+  }, [value, max]);
+
+  const isMaxDefined = useMemo(() => !isNull(max), [max]);
+
+  const levelText = useMemo(() => {
+    if(!isMaxDefined) {
+      return value;
+    } else {
+      return value + '/' + max;
+    }
+  }, [isMaxDefined, value, max]);
 
   return (
     <Wrapper>
       <FlexBox>
-        <NameText>{name}</NameText>
-        <LevelText>{level}/{max}</LevelText>
+        <TypeText>{type}</TypeText>
+        <LevelText>{levelText}</LevelText>
       </FlexBox>
-      <Gauge percentage={percentage}/>
+      {
+        isMaxDefined && (
+          <Gauge percentage={percentage}/>
+        )
+      }
     </Wrapper>
   )
 };

@@ -21,7 +21,8 @@ import {commonCollection, TOKEN_BASE_URI} from "../../constants/contract";
 import {collectionState, fetchMyCollections} from "../../reducers/collection";
 import {userState} from "../../reducers/user";
 import {useAlert} from "react-alert";
-import { useTranslation } from 'react-i18next';
+import {useTranslation} from 'react-i18next';
+import ContentPreview from "../Widgets/ContentPreview";
 
 const Wrapper = styled.div`
   width: 752px;
@@ -68,15 +69,6 @@ const DragFileArea = styled.div`
   position: relative;
   overflow: hidden;
 
-  img {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
   > div {
     line-height: 38px;
 
@@ -89,6 +81,17 @@ const DragFileArea = styled.div`
     &:nth-child(2) {
       font-size: 18px;
       color: #6D84FF;
+    }
+  }
+  
+  .preview {
+    * {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
   }
 
@@ -297,12 +300,21 @@ const BASE_LEVEL_ENTITY = {
 
 const CHAIN_PLATFORM = process.env.REACT_APP_CHAIN_PLATFORM;
 const CHAIN_ID = process.env.REACT_APP_CHAIN_ID;
+const ACCEPT_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/svg+xml',
+  'video/mp4',
+  'video/web'
+];
+const ACCEPT_MAX_SIZE_MB = 40;
 
 const Form = ({bundle}) => {
   const history = useHistory();
   const dispatch = useDispatch();
   const alert = useAlert();
-  const { t }  = useTranslation(['common','alert']);
+  const {t} = useTranslation(['common', 'alert']);
 
   const {address} = useSelector(userState);
   const {loading} = useSelector(mintState);
@@ -320,21 +332,22 @@ const Form = ({bundle}) => {
   });
 
   const [preview, setPreview] = useState('');
+  const [previewType, setPreviewType] = useState('');
   const [specs, setSpecs] = useState([BASE_SPEC_ENTITY]);
   const [levels, setLevels] = useState([BASE_LEVEL_ENTITY]);
 
   const disableCreate = useMemo(() => {
-    if(isPutOnMarket) {
-      if(!params.price || !params.royalty_ratio || !params.royalty_to) {
+    if (isPutOnMarket) {
+      if (!params.price || !params.royalty_ratio || !params.royalty_to) {
         return true;
       }
     }
 
-    if(!params.chainId || !params.platform) {
+    if (!params.chainId || !params.platform) {
       return true;
     }
 
-    if(!params.name || !params.attachment || !params.description || !params.collection)  {
+    if (!params.name || !params.attachment || !params.description || !params.collection) {
       return true;
     }
   }, [params, isPutOnMarket]);
@@ -349,12 +362,30 @@ const Form = ({bundle}) => {
 
   const handleChangeFile = useCallback((e) => {
     const file = e.target.files[0];
+
+    if (!file) {
+      setParams(params => ({...params, attachment: null}));
+      return;
+    }
+
+    if (!ACCEPT_TYPES.includes(file.type)) {
+      alert.error(t('NOT_ALLOWED_FILE_TYPE'));
+      return;
+    }
+
+    if (file.size / 1024 / 1024 > ACCEPT_MAX_SIZE_MB) {
+      alert.error(t('NOT_ALLOWED_FILE_SIZE_40MB'));
+      return;
+    }
+
     setParams(params => ({...params, attachment: file}));
+
     if (file) {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => {
         setPreview(reader.result);
+        setPreviewType(file.type);
       };
     }
   }, []);
@@ -366,7 +397,7 @@ const Form = ({bundle}) => {
 
     // set default royalty receiver address
     setParams(produce(d => {
-      if(!d.royalty_to) {
+      if (!d.royalty_to) {
         d.royalty_to = address;
       }
     }));
@@ -393,26 +424,29 @@ const Form = ({bundle}) => {
 
   // specs, levels 를 attributes 로 변환
   useEffect(() => {
-    const attributes = {};
+    const attributes = [];
 
     for (let spec of specs) {
-      if (!spec.key) {
+      if (!spec.key || typeof spec.value === "undefined") {
         continue;
       }
 
-      attributes[spec.key] = spec.value;
+      attributes.push({
+        trait_type: spec.key,
+        value: spec.value.toString()
+      });
     }
 
     if (levels.length > 0 && !!levels[0].name) {
-      attributes.level = [];
-
       for (let level of levels) {
-        if (!level.name) {
+        if (!level.name || Number.isNaN(level.level) || Number.isNaN(level.max)) {
           continue;
         }
 
-        attributes.level.push({
-          [level.name]: [level.level, level.max]
+        attributes.push({
+          trait_type: level.name,
+          value: Number(level.level),
+          max_value: Number(level.max)
         });
       }
     }
@@ -483,7 +517,7 @@ const Form = ({bundle}) => {
     dispatch(mints(params)).then(async ({payload, error}) => {
       if (error) {
         throw error;
-      } else if(!payload.success) {
+      } else if (!payload.success) {
         return;
       }
 
@@ -507,11 +541,11 @@ const Form = ({bundle}) => {
           const jsonBody = await makeOrder(collection, tokenId, metadata, marketType, params.price, params.unit);
           const {payload, error} = await dispatch(registerOrder(jsonBody));
 
-          if(error) {
+          if (error) {
             throw error;
-          } else if(!payload.success) {
+          } else if (!payload.success) {
             return;
-          } else if(Array.isArray(payload.data)) {
+          } else if (Array.isArray(payload.data)) {
             order = payload.data[0];
           }
         }
@@ -533,7 +567,6 @@ const Form = ({bundle}) => {
     });
   }, [alert, params, isPutOnMarket, marketType]);
 
-
   return (
     <Wrapper>
       <UploadSection>
@@ -542,10 +575,13 @@ const Form = ({bundle}) => {
           <div>or browse</div>
           {
             preview && (
-              <img src={preview}/>
+              <div className={"preview"}>
+                <ContentPreview type={previewType} src={preview} />
+              </div>
             )
           }
-          <input type="file" onChange={handleChangeFile}/>
+          <input type="file" accept={ACCEPT_TYPES.join(',')}
+                 onChange={handleChangeFile}/>
         </DragFileArea>
         <UploadDescription>
           <div className="title">Image, Video, Audio or 3D Model *</div>
@@ -555,7 +591,7 @@ const Form = ({bundle}) => {
           </div>
           <div className="attributes">
             <div className="type">Max Size</div>
-            <div className="value">40MB</div>
+            <div className="value">{ACCEPT_MAX_SIZE_MB}MB</div>
           </div>
         </UploadDescription>
       </UploadSection>
@@ -617,7 +653,8 @@ const Form = ({bundle}) => {
             </FlexBox>
             <FlexBox centerHorizontal>
               <WalletAddressButton>
-                <input placeholder={t('WALLET_ADDRESS') + ' *'} name="royalty_to" defaultValue={address} onChange={handleChange}/>
+                <input placeholder={t('WALLET_ADDRESS') + ' *'} name="royalty_to" defaultValue={address}
+                       onChange={handleChange}/>
               </WalletAddressButton>
             </FlexBox>
           </PriceSection>
@@ -654,7 +691,8 @@ const Form = ({bundle}) => {
             </MultipleInputWrapper>
           ))
         }
-        <AddFormButton onClick={handleAddSpec}><img src={"/img/ic_create_add_form.svg"}/>{t('ADD_PROPERTY')}</AddFormButton>
+        <AddFormButton onClick={handleAddSpec}><img src={"/img/ic_create_add_form.svg"}/>{t('ADD_PROPERTY')}
+        </AddFormButton>
       </Section>
       <Section>
         <TextFieldLabel>{t('LEVEL')}</TextFieldLabel>
@@ -669,15 +707,18 @@ const Form = ({bundle}) => {
                          onChange={(e) => handleChangeLevel(i, 'name', e.target.value)}/>
               <LevelValues>
                 <TextField placeholder={"3"}
+                           type={"number"}
                            onChange={(e) => handleChangeLevel(i, 'level', e.target.value)}/>
                 <div className="of">of</div>
                 <TextField placeholder={"5"}
+                           type={"number"}
                            onChange={(e) => handleChangeLevel(i, 'max', e.target.value)}/>
               </LevelValues>
             </MultipleInputWrapper>
           ))
         }
-        <AddFormButton onClick={handleAddLevel}><img src={"/img/ic_create_add_form.svg"}/>{t('ADD_LEVEL')}</AddFormButton>
+        <AddFormButton onClick={handleAddLevel}><img src={"/img/ic_create_add_form.svg"}/>{t('ADD_LEVEL')}
+        </AddFormButton>
       </Section>
       <Section>
         {/*

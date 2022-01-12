@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 const Wrapper = styled.div`
   width: 100%;
-  min-width: 1162px;
+  min-width: 1140px;
   background-color: #E5E5EA;
   position: absolute;
   left: 0;
@@ -14,7 +14,7 @@ const Wrapper = styled.div`
 `;
 
 const Row = styled.div`
-  width: 1162px;
+  width: 1140px;
   margin: 80px auto 0 auto;
   position: relative;
   left: 0;

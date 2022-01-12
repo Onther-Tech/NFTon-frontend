@@ -8,14 +8,11 @@ i18n
     .init({
         resources: {
             en: en,
-            ko, ko
+            ko: ko
         },
         lng: "en", // if you're using a language detector, do not define the lng option
         fallbackLng: "en",
         ns: ['common', "alert"],
-        interpolation: {
-            escapeValue: false
-        }
     });
 
 export default i18n
