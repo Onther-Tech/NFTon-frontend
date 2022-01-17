@@ -29,7 +29,7 @@ const ContentPreview = ({type, src, controls}) => {
     <Wrapper>
       {
         fileType === 'image' && (
-          <img src={src} onError={(e) => e.target.src = '/img/ic_card_nopicture.svg'}/>
+          <img src={src || ''} onError={(e) => e.target.src = '/img/ic_card_nopicture.svg'}/>
         )
       }
       {
