@@ -203,8 +203,8 @@ const CollectionDropdown = ({size = SIZE_SMALL, items = [], value, defaultLabel,
               <Item key={i} onClick={() => handleClickItem(i)}>
                 <div className="image">
                   {
-                    x.symbol_link && (
-                      <img className="image" src={x.symbol_link} alt=""/>
+                    x.image && (
+                      <img className="image" src={x.image} alt=""/>
                     )
                   }
                 </div>

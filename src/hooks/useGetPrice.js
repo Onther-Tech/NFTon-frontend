@@ -13,6 +13,10 @@ const useGetUsdPrice = (amount, symbol) => {
 
     const id = coinId[symbol.toUpperCase()];
 
+    if(!id) {
+      return;
+    }
+
     axios.get('https://api.coingecko.com/api/v3/simple/price', {
       params: {
         ids: id,
