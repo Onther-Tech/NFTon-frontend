@@ -28,10 +28,10 @@ import {isNull} from "./index";
 let provider;
 
 if (window.ethereum) {
-  provider = new ethers.providers.Web3Provider(window.ethereum);
+  provider = new ethers.providers.Web3Provider(window.ethereum, "any");
   console.log('set provider: window.ethereum');
 } else {
-  provider = new ethers.providers.JsonRpcProvider(process.env.REACT_APP_HTTP_RPC);
+  provider = new ethers.providers.JsonRpcProvider(process.env.REACT_APP_HTTP_RPC, "any");
   console.log('set provider: http rpc');
 }
 
@@ -401,7 +401,7 @@ export const getOwnedTokensOfCollection = async (collectionAddress, owner) => {
   try {
     balanceOf = await contract.balanceOf(owner);
   } catch (e) {
-    console.error('error', e)
+    console.error(`fail to get balance of ${owner} (collection: ${collectionAddress})`, e.message);
   }
 
   for (let i = 0; i < balanceOf; i++) {
@@ -409,7 +409,7 @@ export const getOwnedTokensOfCollection = async (collectionAddress, owner) => {
       const tokenId = await contract.tokenOfOwnerByIndex(owner, i);
       tokens.push(tokenId.toNumber());
     } catch (e) {
-      console.error('error2', e)
+      console.error(`fail to get owned token info (${owner}'s ${collectionAddress}:${i})`, e.message);
     }
   }
 
@@ -458,7 +458,7 @@ export const parsePrice = (takeAsset) => {
   } else {
     const contract = parseErc20AssetData(data);
     price = ethers.utils.formatEther(takeAsset.value);
-    unit = assetsByAddress[contract];
+    unit = assetsByAddress[contract.toLowerCase()];
   }
 
   return {

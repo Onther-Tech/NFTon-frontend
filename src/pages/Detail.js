@@ -495,7 +495,11 @@ const Detail = () => {
                 <PriceWrapper>
                   {/*<img src={"/img/symbol_ton.svg"}/>*/}
                   <div className="price">{price}</div>
-                  <div className="usd">${usdPrice}</div>
+                  {
+                    !!usdPrice && (
+                      <div className="usd">${usdPrice}</div>
+                    )
+                  }
                   <div className="fee">
                     + {feeRatio * 100}%
                     <div className={"tooltip"}>

@@ -412,6 +412,7 @@ const Form = ({bundle}) => {
       },
       ...collections.map(x => ({
         label: x.name,
+        image: x.symbol_link,
         value: JSON.stringify({
           name: x.name,
           symbol: x.symbol.toUpperCase(),
@@ -560,7 +561,7 @@ const Form = ({bundle}) => {
         tokenId: tokenId
       });
     }).catch(e => {
-      alert.error(t('ERROR') + e.message);
+      alert.error(e.message);
       dispatch(mintActions.setLoading(false));
     }).finally(() => {
       loadingAlert.close();

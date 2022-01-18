@@ -214,7 +214,8 @@ const Profile = () => {
         collectionName: x.makeInfo?.collectionName
       }));
     } else if (currentTab === TAB_CREATED) {
-      arr = items.filter(x => isSameAddress(x.metadata.creator, profileAddress));
+      console.log(items);
+      arr = items.filter(x => isSameAddress(x.metadata?.creator, profileAddress));
     } else if (currentTab === TAB_IMPORTED) {
       arr = items.filter(x => linkedContracts.findIndex(y => isSameAddress(x.contract, y.contract)) !== -1);
     }

@@ -8,6 +8,7 @@ const Wrapper = styled.div`
   > * {
     width: 100%;
     height: 100%;
+    object-fit: contain;
   }
 `;
 
@@ -29,7 +30,7 @@ const ContentPreview = ({type, src, controls}) => {
     <Wrapper>
       {
         fileType === 'image' && (
-          <img src={src} onError={(e) => e.target.src = '/img/ic_card_nopicture.svg'}/>
+          <img src={src || ''} onError={(e) => e.target.src = '/img/ic_card_nopicture.svg'}/>
         )
       }
       {
