@@ -16,14 +16,13 @@ const useWalletRequired = (required) => {
     }
 
     if(!address) {
-      console.log('not connected : ' +window.location.href);
       clearAuthorization();
 
-      history.replace('/connect', {origin: window.location.href});
+      history.replace('/connect', {origin: window.location.pathname + window.location.search});
     } else {
       const accessToken = getAccessToken(address);
       if(!accessToken) {
-        history.replace('/connect', {origin: window.location.href});
+        history.replace('/connect', {origin: window.location.pathname + window.location.search});
       }
     }
   }, [address, required]);

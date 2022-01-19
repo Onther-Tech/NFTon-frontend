@@ -169,14 +169,14 @@ export const makeOrder = async (collection, tokenId, asset, marketType, price, u
   let takeAsset;
 
   if (unit === 'ETH') {
-    takeAsset = Asset(ETH, '0x', parseEther(price).toString());
+    takeAsset = Asset(ETH, enc('0x0000000000000000000000000000000000000000'), parseEther(price).toString());
   } else {
     takeAsset = Asset(ERC20, enc(assets[unit]), parseUnits(price, decimals[unit]).toString());
   }
 
   const dataType = ORDER_DATA_V1;
   const payouts = [];
-  const origins = [[royaltyTo, royaltyRatio * 10 ** FEE_DECIMAL]];
+  const origins = [[royaltyTo, (royaltyRatio / 100) * 10 ** FEE_DECIMAL]];
   const encodedData = encodeRoyaltyData([payouts, origins])
 
   const order = Order(
@@ -307,8 +307,8 @@ export const matchOrders = async (order) => {
     order.salt,
     order.start,
     order.end,
-    order.dataType,
-    order.data
+    "0xffffffff",
+    "0x"
   );
 
   let value = 0;
@@ -386,13 +386,6 @@ export const getTokenInfo = async (contractAddress, tokenId) => {
     owner: null,
   }
 
-  try {
-    returnValues.owner = await getOwnerOf(contractAddress, tokenId);
-  } catch (e) {
-    console.log(`call ownerOf(${tokenId}) error`);
-    return returnValues;
-  }
-
   let tokenURI = await getTokenURI(contractAddress, tokenId);
   if (tokenURI.match(new RegExp(TOKEN_BASE_URI, 'g')).length === 2) {
     tokenURI = tokenURI.replace(TOKEN_BASE_URI, '');
@@ -468,7 +461,7 @@ export const parsePrice = (takeAsset) => {
 
   let price, unit;
 
-  if (data === '0x') {
+  if (data === '0x' || data === enc('0x0000000000000000000000000000000000000000')) {
     price = ethers.utils.formatEther(takeAsset.value);
     unit = 'ETH';
   } else {
