@@ -6,7 +6,7 @@ import {Link, useHistory} from "react-router-dom";
 import {useDispatch, useSelector} from "react-redux";
 import {collectionState, fetchMyCollections} from "../reducers/collection";
 import {useEffect} from "react";
-import useWallet from "../hooks/useWallet";
+import useWalletRequired from "../hooks/useWalletRequired";
 import {userState} from "../reducers/user";
 import {breakLine} from "../utils";
 import { useTranslation } from 'react-i18next';
@@ -119,7 +119,7 @@ const ProfileCollections = ({}) => {
   const {collections} = useSelector(collectionState);
   const { t }  = useTranslation(['common']);
 
-  useWallet(true);
+  useWalletRequired(true);
   useEffect(() =>{
     if(address) {
       dispatch(fetchMyCollections({address}));

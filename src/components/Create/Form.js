@@ -16,13 +16,14 @@ import {approveTransferProxy, makeOrder, mint} from "../../utils/nft";
 import {mintActions, mints, mintState} from "../../reducers/mint";
 import {useHistory} from "react-router-dom";
 import {registerOrder} from "../../reducers/order";
-import {ORDER_FIXED_PRICE} from "../../constants/sale";
+import {ORDER_FIXED_PRICE, ORDER_TYPE_CHECKOUT} from "../../constants/sale";
 import {commonCollection, TOKEN_BASE_URI} from "../../constants/contract";
 import {collectionState, fetchMyCollections} from "../../reducers/collection";
 import {userState} from "../../reducers/user";
 import {useAlert} from "react-alert";
 import {useTranslation} from 'react-i18next';
 import ContentPreview from "../Widgets/ContentPreview";
+import {checkValidAccessToken} from "../../utils/user";
 
 const Wrapper = styled.div`
   width: 752px;
@@ -483,89 +484,97 @@ const Form = ({bundle}) => {
   }, []);
 
   const handleCreate = useCallback(() => {
-    if (!params.name) {
-      return alert.error(t('ENTER_NAME'));
-    }
-    if (params.name < 4) {
-      return alert.error(t('ENTER_NAME_MORE_4'));
-    }
-    if (!params.description) {
-      return alert.error(t('ENTER_DESCRIPTION'));
-    }
-    if (!params.collection) {
-      return alert.error(t('SELECT_COLLECTION'));
-    }
-
-    if (isPutOnMarket && marketType === ORDER_FIXED_PRICE) {
-      if (marketType === ORDER_FIXED_PRICE) {
-        if (!params.price) {
-          return alert.error(t('PRICE_NEEDED'));
-        }
+    checkValidAccessToken(history, dispatch, () => {
+      if (!params.name) {
+        return alert.error(t('ENTER_NAME'));
+      }
+      if (params.name < 4) {
+        return alert.error(t('ENTER_NAME_MORE_4'));
+      }
+      if (!params.description) {
+        return alert.error(t('ENTER_DESCRIPTION'));
+      }
+      if (!params.collection) {
+        return alert.error(t('SELECT_COLLECTION'));
       }
 
-      if (!params.royalty_ratio || params.royalty_ratio < 0 || params.royalty_ratio > 100) {
-        return alert.error(t('ROYALTIY_VALUE_NOT_RIGHT'));
-      }
-    }
-
-    const loadingAlert = alert.show({
-      title: "Please wait a bit...",
-      loading: true,
-      disableBackdropClick: true
-    });
-
-    dispatch(mintActions.setLoading(true));
-    dispatch(mints(params)).then(async ({payload, error}) => {
-      if (error) {
-        throw error;
-      } else if (!payload.success) {
-        return;
-      }
-
-      const mintData = payload.data;
-
-      if (!mintData.asset_uri) {
-        return;
-      }
-
-      const collection = mintData.collection;
-      const cid = mintData.asset_uri.replace(TOKEN_BASE_URI, '');
-      const {tokenId} = await mint(mintData.collection.contract, cid);
-
-      const metadata = mintData.asset_data;
-      let order;
-
-      if (isPutOnMarket) {
-        await approveTransferProxy(collection.contract);
-
+      if (isPutOnMarket && marketType === ORDER_FIXED_PRICE) {
         if (marketType === ORDER_FIXED_PRICE) {
-          const jsonBody = await makeOrder(collection, tokenId, metadata, marketType, params.price, params.unit);
-          const {payload, error} = await dispatch(registerOrder(jsonBody));
+          if (!params.price) {
+            return alert.error(t('PRICE_NEEDED'));
+          }
+        }
 
-          if (error) {
-            throw error;
-          } else if (!payload.success) {
-            return;
-          } else if (Array.isArray(payload.data)) {
-            order = payload.data[0];
+        if(params.royalty_ratio) {
+          if(!params.royalty_to) {
+            return alert.error(t('ROYALTY_NO_RECEIVER'));
+          }
+          if (params.royalty_ratio < 0 || params.royalty_ratio > 100) {
+            return alert.error(t('ROYALTIY_VALUE_NOT_RIGHT'));
           }
         }
       }
 
-      dispatch(mintActions.setLoading(false));
-
-      history.replace("/created", {
-        metadata: metadata,
-        order: order,
-        collection: collection,
-        tokenId: tokenId
+      const loadingAlert = alert.show({
+        title: "Please wait a bit...",
+        loading: true,
+        disableBackdropClick: true
       });
-    }).catch(e => {
-      alert.error(e.message);
-      dispatch(mintActions.setLoading(false));
-    }).finally(() => {
-      loadingAlert.close();
+
+      dispatch(mintActions.setLoading(true));
+      dispatch(mints(params)).then(async ({payload, error}) => {
+        if (error) {
+          throw error;
+        } else if (!payload.success) {
+          throw new Error(payload.message);
+        }
+
+        const mintData = payload.data;
+
+        if (!mintData.asset_uri) {
+          return;
+        }
+
+        const collection = mintData.collection;
+        const cid = mintData.asset_uri.replace(TOKEN_BASE_URI, '');
+        const {tokenId} = await mint(mintData.collection.contract, cid);
+
+        const metadata = mintData.asset_data;
+        let order;
+
+        if (isPutOnMarket) {
+          await approveTransferProxy(collection.contract);
+
+          if (marketType === ORDER_FIXED_PRICE) {
+            const jsonBody = await makeOrder(collection, tokenId, metadata, marketType, params.price, params.unit, params.royalty_ratio, params.royalty_to);
+            const {payload, error} = await dispatch(registerOrder(jsonBody));
+
+            if (error) {
+              throw error;
+            } else if (!payload.success) {
+              return;
+            } else if (Array.isArray(payload.data)) {
+              order = payload.data[0];
+            }
+          }
+        }
+
+        dispatch(mintActions.setLoading(false));
+
+        history.replace("/created", {
+          metadata: metadata,
+          order: order,
+          collection: collection,
+          tokenId: tokenId
+        });
+      }).catch(e => {
+        alert.error(e.message);
+        dispatch(mintActions.setLoading(false));
+      }).finally(() => {
+        loadingAlert.close();
+      });
     });
+
   }, [alert, params, isPutOnMarket, marketType]);
 
   return (

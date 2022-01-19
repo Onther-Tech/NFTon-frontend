@@ -5,7 +5,7 @@ import TextFieldLabel from "../components/Widgets/TextFieldLabel";
 import TextField from "../components/Widgets/TextField";
 import GradientButton from "../components/Widgets/GradientButton";
 import {useCallback, useEffect, useState} from "react";
-import useWallet from "../hooks/useWallet";
+import useWalletRequired from "../hooks/useWalletRequired";
 import {useDispatch, useSelector} from "react-redux";
 import {updateProfile, userState} from "../reducers/user";
 import {isNull, readAsDataURL} from "../utils";
@@ -160,7 +160,7 @@ const ProfileSettings = ({}) => {
   const [profilePreview, setProfilePreview] = useState('');
   const [coverPreview, setCoverPreview] = useState('');
 
-  useWallet(true);
+  useWalletRequired(true);
 
   useEffect(() => {
     if (me.photo) {

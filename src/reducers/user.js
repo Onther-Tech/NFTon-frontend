@@ -85,6 +85,9 @@ export const userSlice = createSlice({
     clearAddress(state) {
       return {...state, address: initialState.address}
     },
+    clearUser(state) {
+      return {...state, address: initialState.address, idprofiles: initialState.idprofiles, me: initialState.me}
+    },
     setProfile(state, {payload}) {
       return {...state, profile: {...state.profile, ...payload}};
     },

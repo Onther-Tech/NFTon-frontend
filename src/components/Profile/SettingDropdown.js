@@ -65,7 +65,7 @@ const SettingDropdown = ({}) => {
     if (value === 'logout') {
       removeAccessToken(user.address);
       clearAuthorization();
-      dispatch(userActions.clearAddress());
+      dispatch(userActions.clearUser());
       return;
     }
 
