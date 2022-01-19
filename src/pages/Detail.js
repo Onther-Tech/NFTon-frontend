@@ -11,7 +11,7 @@ import Property from "../components/Detail/Property";
 import Level from "../components/Detail/Level";
 import TokenInfo from "../components/Detail/TokenInfo";
 import {Link, useHistory, useRouteMatch} from "react-router-dom";
-import {getTokenInfo} from "../utils/nft";
+import {getOwnerOf, getTokenInfo} from "../utils/nft";
 import {fetchOrderByAddress, orderActions, orderState} from "../reducers/order";
 import {useDispatch, useSelector} from "react-redux";
 import useParseTokenInfo from "../components/Widgets/useParseTokenInfo";
@@ -377,9 +377,12 @@ const Detail = () => {
       return;
     }
 
-    getTokenInfo(contract, tokenId).then(({metadata, owner}) => {
-      setMetadata(metadata);
+    getOwnerOf(contract, tokenId).then((owner) => {
       setOwner(owner);
+    });
+
+    getTokenInfo(contract, tokenId).then(({metadata}) => {
+      setMetadata(metadata);
     });
 
     if (isSameAddress(contract, commonCollection.contract)) {

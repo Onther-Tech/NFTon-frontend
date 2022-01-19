@@ -21,7 +21,7 @@ export const hasAccessToken = (address) => {
 export const checkValidAccessToken = (history, dispatch, onValid) => {
   dispatch(fetchAccessToken()).then(({error}) => {
     if(error) {
-      history.replace('/connect', {origin: window.location.href});
+      history.replace('/connect', {origin: window.location.pathname + window.location.search});
     } else {
       onValid && onValid();
     }

@@ -17,7 +17,6 @@ const ORDER_STEP_TRANSACTION = 3;
 const ORDER_STEP_SUCCESS = 4;
 
 const OrderProgress = ({order, feeRatio, orderType, onCancel}) => {
-
   const { t }  = useTranslation(['alert']);
   const dispatch = useDispatch();
   const alert = useAlert();
@@ -35,6 +34,7 @@ const OrderProgress = ({order, feeRatio, orderType, onCancel}) => {
 
   // get my balance & calculate fee & calculate total pay
   useEffect(() => {
+    console.log(price, unit)
     if (price && unit) {
       getBalance(unit).then(setBalance);
 

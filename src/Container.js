@@ -15,11 +15,13 @@ import {useHistory} from "react-router-dom";
 import {fetchCategories} from "./reducers/category";
 import {isMetaMask, isValidNetwork, requestAccounts} from "./utils/metamask";
 import {useTranslation} from "react-i18next";
+import {useAlert} from "react-alert";
 
 const Container = ({children}) => {
   const {t} = useTranslation();
   const history = useHistory();
   const dispatch = useDispatch();
+  const alert = useAlert();
   const {idprofiles, address, me} = useSelector(userState);
 
   useEffect(() => {
