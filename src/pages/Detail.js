@@ -10,12 +10,12 @@ import Tooltip from "../components/Widgets/Tooltip";
 import Property from "../components/Detail/Property";
 import Level from "../components/Detail/Level";
 import TokenInfo from "../components/Detail/TokenInfo";
-import {Link, useRouteMatch} from "react-router-dom";
+import {Link, useHistory, useRouteMatch} from "react-router-dom";
 import {getTokenInfo} from "../utils/nft";
 import {fetchOrderByAddress, orderActions, orderState} from "../reducers/order";
 import {useDispatch, useSelector} from "react-redux";
 import useParseTokenInfo from "../components/Widgets/useParseTokenInfo";
-import {fetchProfile} from "../reducers/user";
+import {fetchProfile, userState} from "../reducers/user";
 import useGetUsdPrice from "../hooks/useGetPrice";
 import {fetchCollection} from "../reducers/collection";
 import useDispatchUnmount from "../hooks/useDispatchUnmount";
@@ -27,6 +27,8 @@ import OrderProgress from "../components/Detail/OrderProgress";
 import {ORDER_TYPE_CHECKOUT} from "../constants/sale";
 import {getAddress} from "../utils/metamask";
 import ContentPreview from "../components/Widgets/ContentPreview";
+import ProfileImage from "../components/Widgets/ProfileImage";
+import {checkValidAccessToken} from "../utils/user";
 
 const Header = styled(FlexBox)`
   display: flex;
@@ -308,12 +310,14 @@ const PropertiesGrid = styled.div`
 `;
 
 const Detail = () => {
+  const history = useHistory();
   const dispatch = useDispatch();
   const match = useRouteMatch();
 
   const {contract, tokenId} = useMemo(() => match.params, [match]);
   const [metadata, setMetadata] = useState(null);
   const [owner, setOwner] = useState(null);
+  const {address} = useSelector(userState);
   const {order, priceHistory} = useSelector(orderState);
 
   const feeRatio = useProtocolFeeRatio();
@@ -342,7 +346,7 @@ const Detail = () => {
   const usdPrice = useGetUsdPrice(price, unit);
 
   const isMakerOwned = useMemo(() => isSameAddress(owner, maker), [owner, maker]);
-  const isMine = useMemo(() => isSameAddress(maker, getAddress()), [maker]);
+  const isMine = useMemo(() => isSameAddress(maker, address), [maker, address]);
 
   const {isFavoriteOrder, onClickFavorite} = useOrderFavorite(idorders, () => {
     dispatch(fetchOrderByAddress({contractAddress: contract, tokenId: tokenId}));
@@ -442,8 +446,10 @@ const Detail = () => {
   }, [owner]);
 
   const handleBuy = useCallback(() => {
-    setOrderType(ORDER_TYPE_CHECKOUT);
-  }, []);
+    checkValidAccessToken(history, dispatch, () => {
+      setOrderType(ORDER_TYPE_CHECKOUT);
+    });
+  }, [history, dispatch]);
 
   const handleRefresh = useCallback(() => {
     setFetch(true);
@@ -530,7 +536,7 @@ const Detail = () => {
                 <label>Owned by</label>
                 <Link to={"/profile/" + ownedBy?.address}>
                   {ownedBy?.name}
-                  <img src={ownedBy?.photo}/>
+                  <ProfileImage src={ownedBy?.photo}/>
                 </Link>
               </OwnerWrapper>
             )

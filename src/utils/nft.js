@@ -6,7 +6,7 @@ import {abi as brandCollectionABI} from '../abi/ERC721Collection.json';
 import {abi as commonCollectionABI} from '../abi/ERC721Public.json';
 
 import {ethers} from 'ethers';
-import {dec, enc, ERC20, ERC721, ETH, id} from "./assets";
+import {dec, enc, ERC20, ERC721, ETH, id, ORDER_DATA_V1} from "./assets";
 import {
   assets,
   assetsByAddress,
@@ -135,7 +135,14 @@ export const approveTransferProxy = async (collectionAddress) => {
   return tx.hash;
 }
 
-export const makeOrder = async (collection, tokenId, asset, marketType, price, unit, start, end) => {
+export const encodeRoyaltyData = (data) => {
+  return ethers.utils.defaultAbiCoder.encode(
+    ["tuple(tuple(address,uint96)[], tuple(address,uint96)[])"],
+    [data]
+  );
+}
+
+export const makeOrder = async (collection, tokenId, asset, marketType, price, unit, royaltyRatio, royaltyTo, start, end) => {
   const signer = provider.getSigner();
   const address = await signer.getAddress();
   const salt = generateSalt();
@@ -167,6 +174,11 @@ export const makeOrder = async (collection, tokenId, asset, marketType, price, u
     takeAsset = Asset(ERC20, enc(assets[unit]), parseUnits(price, decimals[unit]).toString());
   }
 
+  const dataType = ORDER_DATA_V1;
+  const payouts = [];
+  const origins = [[royaltyTo, royaltyRatio * 10 ** FEE_DECIMAL]];
+  const encodedData = encodeRoyaltyData([payouts, origins])
+
   const order = Order(
     address.toLowerCase(),
     makeAsset,
@@ -175,8 +187,8 @@ export const makeOrder = async (collection, tokenId, asset, marketType, price, u
     salt,
     start || 0,
     end || 0,
-    '0xffffffff',
-    '0x'
+    dataType,
+    encodedData
   );
 
   const sign = await signOrder(order, signer, EXCHANGE);
@@ -245,6 +257,7 @@ export const checkApproved = async (order) => {
   const feeAmount = value.mul(fee).div(ethers.BigNumber.from(10 ** FEE_DECIMAL));
   const approveAmount = value.add(feeAmount);
 
+  console.log('approve 해야할 수량: ' + approveAmount.toString(), 'allowance: ' + allowance.toString())
   return approveAmount.lte(allowance);
 }
 
@@ -302,6 +315,8 @@ export const matchOrders = async (order) => {
   if (takeOrder.takeAsset.assetType.assetClass === ETH) {
     value = takeOrder.takeAsset.value;
   }
+
+  console.log(makeOrder, takeOrder, order.sign, value);
 
   const tx = await exchange.connect(signer).matchOrders(
     makeOrder,
@@ -407,6 +422,7 @@ export const getOwnedTokensOfCollection = async (collectionAddress, owner) => {
   for (let i = 0; i < balanceOf; i++) {
     try {
       const tokenId = await contract.tokenOfOwnerByIndex(owner, i);
+      console.log(collectionAddress, i, tokenId.toNumber());
       tokens.push(tokenId.toNumber());
     } catch (e) {
       console.error(`fail to get owned token info (${owner}'s ${collectionAddress}:${i})`, e.message);

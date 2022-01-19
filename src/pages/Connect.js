@@ -60,15 +60,15 @@ const Connect = () => {
     }
 
     if (hasAccessToken(user.address)) {
-      if (history.action === 'POP') {
-        history.replace('/');
+      if (history.location.state?.origin) {
+        history.replace(history.location.state.origin);
       } else {
-        history.goBack();
+        history.replace('/');
       }
     } else {
-      dispatch(userActions.clearAddress);
+      dispatch(userActions.clearUser());
     }
-  }, [user, history]);
+  }, [user]);
 
   const handleConnectMetamask = useCallback(() => {
     if (!isMetaMask()) {

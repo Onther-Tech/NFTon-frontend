@@ -5,7 +5,7 @@ import CardList from "../components/Layouts/CardList";
 import {useEffect, useMemo, useState} from "react";
 import PageTab from "../components/Widgets/PageTab";
 import SettingDropdown from "../components/Profile/SettingDropdown";
-import useWallet from "../hooks/useWallet";
+import useWalletRequired from "../hooks/useWalletRequired";
 import {useDispatch, useSelector} from "react-redux";
 import {fetchExchangeEvent, fetchFavoriteOrders, fetchProfile, userActions, userState} from "../reducers/user";
 import {useRouteMatch} from "react-router-dom";
@@ -17,6 +17,7 @@ import useDispatchUnmount from "../hooks/useDispatchUnmount";
 import EmptyView from "../components/Widgets/EmptyView";
 import {filterAndSortList} from "../utils/filter";
 import {useTranslation} from 'react-i18next';
+import ProfileImage from "../components/Widgets/ProfileImage";
 
 const TopCover = styled.div`
   width: 100%;
@@ -76,10 +77,8 @@ const CollectionImage = styled.div`
   border-radius: 50%;
   overflow: hidden;
 
-  > img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+  img {
+    padding: 20px;
   }
 `;
 
@@ -182,7 +181,7 @@ const Profile = () => {
     return address === profile.account;
   }, [address, profile])
 
-  useWallet(true);
+  useWalletRequired(!profileAddress);
   useDispatchUnmount(userActions.clearItems);
 
   useEffect(() => {
@@ -214,7 +213,6 @@ const Profile = () => {
         collectionName: x.makeInfo?.collectionName
       }));
     } else if (currentTab === TAB_CREATED) {
-      console.log(items);
       arr = items.filter(x => isSameAddress(x.metadata?.creator, profileAddress));
     } else if (currentTab === TAB_IMPORTED) {
       arr = items.filter(x => linkedContracts.findIndex(y => isSameAddress(x.contract, y.contract)) !== -1);
@@ -288,11 +286,7 @@ const Profile = () => {
       <Header>
         <CollectionInfo>
           <CollectionImage>
-            {
-              profile.photo && (
-                <img src={profile.photo}/>
-              )
-            }
+            <ProfileImage src={profile.photo} />
           </CollectionImage>
           <div className="title">{profile.user_name || profileAddress}</div>
           {/*

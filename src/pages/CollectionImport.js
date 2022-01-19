@@ -2,7 +2,7 @@ import PageWrapper from "../components/Layouts/PageWrapper";
 import PageHeader from "../components/Layouts/PageHeader";
 import SettingNavigation from "../components/Widgets/SettingNavigation";
 import TextField from "../components/Widgets/TextField";
-import useWallet from "../hooks/useWallet";
+import useWalletRequired from "../hooks/useWalletRequired";
 import {useDispatch} from "react-redux";
 import {useCallback, useMemo, useState} from "react";
 import GradientButton from "../components/Widgets/GradientButton";
@@ -12,6 +12,8 @@ import {linkContract} from "../reducers/collection";
 import {getCollectionInfo, hasERC721Interface} from "../utils/nft";
 import {useAlert} from "react-alert";
 import {useTranslation} from 'react-i18next';
+import {checkValidAccessToken} from "../utils/user";
+import {useHistory} from "react-router-dom";
 
 const ImportButton = styled(GradientButton)`
   margin-top: 60px;
@@ -19,10 +21,11 @@ const ImportButton = styled(GradientButton)`
 `;
 
 const CollectionImport = ({}) => {
+  const history = useHistory();
   const dispatch = useDispatch();
   const alert = useAlert();
 
-  useWallet(true);
+  useWalletRequired(true);
   const {t} = useTranslation(['common', 'alert']);
 
   const [contractAddress, setContractAddress] = useState('');
@@ -33,37 +36,38 @@ const CollectionImport = ({}) => {
   }, []);
 
   const handleImport = useCallback(() => {
-    hasERC721Interface(contractAddress).then((flag) => {
-      if (!flag) {
-        alert.error("This contract is not ERC721 standard.");
-        return;
-      }
-
-      getCollectionInfo(contractAddress).then(async ({name}) => {
-        const {payload, error} = await dispatch(linkContract({
-          chainId: process.env.REACT_APP_CHAIN_ID,
-          platform: process.env.REACT_APP_CHAIN_PLATFORM,
-          contract: contractAddress,
-          name: name
-        }));
-
-        if (error) {
-          alert.error(t('COLLECTION_CANT_ADDED'));
-          throw error;
+    checkValidAccessToken(history, dispatch, () => {
+      hasERC721Interface(contractAddress).then((flag) => {
+        if (!flag) {
+          alert.error("This contract is not ERC721 standard.");
+          return;
         }
 
-        if (payload.success) {
-          alert.show(t('COLLECTION_ADDED'));
-        } else if (payload.message === 'already existed') {
-          alert.error(t('COLLECTION_ALREADY_ADDED'));
-        }
+        getCollectionInfo(contractAddress).then(async ({name}) => {
+          const {payload, error} = await dispatch(linkContract({
+            chainId: process.env.REACT_APP_CHAIN_ID,
+            platform: process.env.REACT_APP_CHAIN_PLATFORM,
+            contract: contractAddress,
+            name: name
+          }));
 
-        setContractAddress('');
-      }).catch(e => {
-        alert.error(e.message);
-      })
+          if (error) {
+            alert.error(t('COLLECTION_CANT_ADDED'));
+            throw error;
+          }
+
+          if (payload.success) {
+            alert.show(t('COLLECTION_ADDED'));
+          } else if (payload.message === 'already existed') {
+            alert.error(t('COLLECTION_ALREADY_ADDED'));
+          }
+
+          setContractAddress('');
+        }).catch(e => {
+          alert.error(e.message);
+        })
+      });
     });
-
   }, [contractAddress]);
 
   return (

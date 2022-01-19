@@ -1,40 +1,78 @@
 import NavigationBar from "./components/Layouts/NavigationBar";
 import {useDispatch, useSelector} from "react-redux";
-import {fetchAccessToken, fetchFavoriteOrders, fetchMyProfile, userActions, userState} from "./reducers/user";
+import {
+  accessToken,
+  fetchAccessToken,
+  fetchFavoriteOrders,
+  fetchMyProfile,
+  userActions,
+  userState
+} from "./reducers/user";
 import {useEffect} from "react";
-import {removeAccessToken} from "./utils/user";
-import useWallet from "./hooks/useWallet";
-import {clearAuthorization} from "./utils/axios";
+import {getAccessToken, hasAccessToken, removeAccessToken} from "./utils/user";
+import {clearAuthorization, setAuthorization} from "./utils/axios";
 import {useHistory} from "react-router-dom";
 import {fetchCategories} from "./reducers/category";
+import {isMetaMask, isValidNetwork, requestAccounts} from "./utils/metamask";
+import {useTranslation} from "react-i18next";
 
 const Container = ({children}) => {
+  const {t} = useTranslation();
   const history = useHistory();
   const dispatch = useDispatch();
   const {idprofiles, address, me} = useSelector(userState);
 
-  useWallet();
-
   useEffect(() => {
     dispatch(fetchCategories());
-  }, []);
 
-  // fetch user profile
-  useEffect(() => {
-    if (address !== null) {
-      dispatch(fetchAccessToken()).then(res => {
-        if (res.error) {
-          if (res.error.message.indexOf('419') !== -1) {
-            removeAccessToken(address);
-            clearAuthorization();
-            dispatch(userActions.clearAddress());
-          }
-        } else {
-          dispatch(fetchMyProfile());
+    if (isMetaMask()) {
+      if(!isValidNetwork()) {
+        alert.error(t('WALLET_NETWORK_NOT_VALID'));
+        return;
+      }
+
+      requestAccounts().then(([addr]) => {
+        const accessToken = getAccessToken(addr);
+
+        if(accessToken) {
+          setAuthorization(accessToken);
+          dispatch(userActions.setAddress(addr));
         }
       })
     }
+
+    window.ethereum && window.ethereum.on('accountsChanged', ([newAddress]) => {
+      const accessToken = getAccessToken(newAddress);
+
+      if(accessToken) {
+        setAuthorization(accessToken);
+        dispatch(userActions.setAddress(newAddress));
+      } else {
+        clearAuthorization();
+        dispatch(userActions.clearUser());
+      }
+    })
+  }, []);
+
+  useEffect(() => {
+    if(!address || !hasAccessToken(address)) {
+      return;
+    }
+
+    // fetch user profile if access token not empty
+    dispatch(fetchAccessToken()).then(res => {
+      if (res.error) {
+        if (res.error.message.indexOf('419') !== -1) {
+          removeAccessToken(address);
+          clearAuthorization();
+          dispatch(userActions.clearUser());
+        }
+      } else {
+        dispatch(fetchMyProfile());
+      }
+    });
   }, [address]);
+
 
   // fetch user's favorite orders
   useEffect(() => {
