@@ -2,7 +2,7 @@ import OrderStepModal from "../Modal/OrderStepModal";
 import {useCallback, useEffect, useState} from "react";
 import {ORDER_TYPE_BID, ORDER_TYPE_CHECKOUT} from "../../constants/sale";
 import useParseTokenInfo from "../Widgets/useParseTokenInfo";
-import {approveToPayment, checkApproved, getBalance, matchOrders} from "../../utils/nft";
+import {approveMax, checkApproved, getBalance, matchOrders} from "../../utils/nft";
 import numeral from "numeral";
 import {useDispatch} from "react-redux";
 import {orderActions, registerOrderBuy} from "../../reducers/order";
@@ -34,7 +34,6 @@ const OrderProgress = ({order, feeRatio, orderType, onCancel}) => {
 
   // get my balance & calculate fee & calculate total pay
   useEffect(() => {
-    console.log(price, unit)
     if (price && unit) {
       getBalance(unit).then(setBalance);
 
@@ -70,7 +69,7 @@ const OrderProgress = ({order, feeRatio, orderType, onCancel}) => {
           return;
         }
 
-        isApproved = await approveToPayment(order);
+        isApproved = await approveMax(order);
         if (isApproved) {
           setApproved(true);
         } else {
@@ -113,8 +112,6 @@ const OrderProgress = ({order, feeRatio, orderType, onCancel}) => {
           console.error(error);
           return;
         }
-
-        console.log(payload);
 
         setOrderStep(ORDER_STEP_SUCCESS);
         dispatch(orderActions.clearOrder());

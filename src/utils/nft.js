@@ -257,24 +257,17 @@ export const checkApproved = async (order) => {
   const feeAmount = value.mul(fee).div(ethers.BigNumber.from(10 ** FEE_DECIMAL));
   const approveAmount = value.add(feeAmount);
 
-  console.log('approve 해야할 수량: ' + approveAmount.toString(), 'allowance: ' + allowance.toString())
   return approveAmount.lte(allowance);
 }
 
-export const approveToPayment = async (order) => {
+export const approveMax = async (order) => {
   const signer = provider.getSigner();
-  const exchange = new ethers.Contract(EXCHANGE, exchangeABI, provider);
-  const fee = await exchange.protocolFee();
 
   const assetData = order.takeAsset.assetType.data;
   const erc20Address = dec(['address'], assetData)[0];
   const erc20Contract = new ethers.Contract(erc20Address, erc20ABI, provider);
 
-  const value = ethers.BigNumber.from(order.takeAsset.value);
-  const feeAmount = value.mul(fee).div(ethers.BigNumber.from(10 ** FEE_DECIMAL));
-  const approveAmount = value.add(feeAmount);
-
-  const tx = await erc20Contract.connect(signer).approve(order.erc20TransferProxy, approveAmount);
+  const tx = await erc20Contract.connect(signer).approve(order.erc20TransferProxy, ethers.constants.MaxUint256);
 
   const receipt = await tx.wait();
   const approvalEvent = receipt.events.find(x => x.event === 'Approval');
@@ -286,6 +279,7 @@ export const matchOrders = async (order) => {
   const signer = provider.getSigner();
   const address = await signer.getAddress();
   const exchange = new ethers.Contract(EXCHANGE, exchangeABI, provider);
+  const protocolFee = await exchange.protocolFee();
 
   const makeOrder = Order(
     order.maker,
@@ -312,11 +306,12 @@ export const matchOrders = async (order) => {
   );
 
   let value = 0;
-  if (takeOrder.takeAsset.assetType.assetClass === ETH) {
-    value = takeOrder.takeAsset.value;
-  }
+  if (takeOrder.makeAsset.assetType.assetClass === ETH) {
+    const eth = ethers.BigNumber.from(takeOrder.makeAsset.value);
+    const feeAmount = eth.mul(protocolFee).div(ethers.BigNumber.from(10 ** FEE_DECIMAL));
 
-  console.log(makeOrder, takeOrder, order.sign, value);
+    value = eth.add(feeAmount).toString();
+  }
 
   const tx = await exchange.connect(signer).matchOrders(
     makeOrder,
@@ -415,7 +410,6 @@ export const getOwnedTokensOfCollection = async (collectionAddress, owner) => {
   for (let i = 0; i < balanceOf; i++) {
     try {
       const tokenId = await contract.tokenOfOwnerByIndex(owner, i);
-      console.log(collectionAddress, i, tokenId.toNumber());
       tokens.push(tokenId.toNumber());
     } catch (e) {
       console.error(`fail to get owned token info (${owner}'s ${collectionAddress}:${i})`, e.message);
