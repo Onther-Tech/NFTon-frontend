@@ -23,6 +23,13 @@ export const cancelOrder = createAsyncThunk(
   }
 )
 
+export const modifyOrder = createAsyncThunk(
+  namespace + '/modifyOrder',
+  async (params) => {
+    return await IndexAPI.modifyOrder(params);
+  }
+)
+
 export const fetchOrder = createAsyncThunk(
   namespace + '/fetchOrder',
   async (params) => {
