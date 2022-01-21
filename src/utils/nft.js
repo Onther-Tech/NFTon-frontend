@@ -142,6 +142,36 @@ export const encodeRoyaltyData = (data) => {
   );
 }
 
+export const decodeRoyaltyData = (data) => {
+  return ethers.utils.defaultAbiCoder.decode(
+    ["tuple(tuple(address,uint96)[], tuple(address,uint96)[])"],
+    data
+  );
+}
+
+export const getRoyaltyInfo = (data) => {
+  const decoded = decodeRoyaltyData(data);
+  if(decoded && decoded.length > 0) {
+    const [address, ratio] = decoded[0][1][0];
+
+    return {
+      address: address,
+      ratio: ethers.utils.formatUnits(ratio.toString(), FEE_DECIMAL) * 100
+    }
+  }
+}
+
+export const isValidMetadata = (metadata) => {
+  return (
+    metadata.hasOwnProperty('attributes') &&
+    metadata.hasOwnProperty('creator') &&
+    metadata.hasOwnProperty('description') &&
+    metadata.hasOwnProperty('image') &&
+    metadata.hasOwnProperty('name') &&
+    metadata.hasOwnProperty('type')
+  );
+}
+
 export const makeOrder = async (collection, tokenId, asset, marketType, price, unit, royaltyRatio, royaltyTo, start, end) => {
   const signer = provider.getSigner();
   const address = await signer.getAddress();

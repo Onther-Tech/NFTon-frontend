@@ -73,12 +73,13 @@ const CollectionInfo = styled.div`
 const CollectionImage = styled.div`
   width: 170px;
   height: 170px;
-  background-color: #E5E5EA;
+  background: linear-gradient(136.27deg, #C7C7CC 19.63%, rgba(199, 199, 204, 0) 91.41%);
   border-radius: 50%;
   overflow: hidden;
 
   img {
     padding: 20px;
+    background-color: transparent;
   }
 `;
 
@@ -278,9 +279,9 @@ const Profile = () => {
     <PageWrapper>
       <TopCover>
         {
-          profile.cover && (
+          profile.cover?(
             <img src={profile.cover}/>
-          )
+          ):<img src={'img/ic_profile_background.png'}/>
         }
       </TopCover>
       <Header>
