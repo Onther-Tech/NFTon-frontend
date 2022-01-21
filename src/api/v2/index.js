@@ -16,7 +16,7 @@ const IndexAPI = {
   },
 
   async modifyOrder({idorders, jsonBody}) {
-    return await getAxios().delete(
+    return await getAxios().put(
       process.env.REACT_APP_API_ENDPOINT_V2 + '/orders/' + idorders,
       jsonBody
     ).then(res => res.data);

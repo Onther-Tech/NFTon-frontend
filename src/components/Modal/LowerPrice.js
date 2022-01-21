@@ -6,7 +6,7 @@ import {useAlert} from "react-alert";
 import {useDispatch} from "react-redux";
 import PriceInput from "../Widgets/PriceInput";
 import {decodeRoyaltyData, getRoyaltyInfo, makeOrder} from "../../utils/nft";
-import {registerOrder} from "../../reducers/order";
+import {modifyOrder, registerOrder} from "../../reducers/order";
 
 
 const ModalWrapper = styled.div`
@@ -143,7 +143,7 @@ const LowerPrice = ({order, currentPrice, currentUnit, visible, onClose}) => {
         royalty.address
       );
 
-      const {payload, error} = await dispatch(registerOrder(jsonBody));
+      const {payload, error} = await dispatch(modifyOrder({idorders: order.idorders, jsonBody}));
 
       loadingAlert.close();
 
@@ -151,7 +151,7 @@ const LowerPrice = ({order, currentPrice, currentUnit, visible, onClose}) => {
         alert.error(error.message);
       } else if (!payload?.success) {
         alert.show(payload?.message);
-      } else if (Array.isArray(payload?.data)) {
+      } else {
         onClose && onClose();
         alert.show(t('UPDATE_ORDER_SUCCESS'));
       }
