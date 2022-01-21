@@ -281,7 +281,7 @@ const CollectionForm = ({collection}) => {
       }
 
       const loadingAlert = alert.show({
-        title: "Please wait a bit...",
+        title: t('PLEASE_WAIT'),
         loading: true,
         disableBackdropClick: true
       });

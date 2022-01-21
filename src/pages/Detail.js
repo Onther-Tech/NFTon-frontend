@@ -12,7 +12,7 @@ import Level from "../components/Detail/Level";
 import TokenInfo from "../components/Detail/TokenInfo";
 import {Link, useHistory, useRouteMatch} from "react-router-dom";
 import {getOwnerOf, getTokenInfo} from "../utils/nft";
-import {fetchOrderByAddress, orderActions, orderState} from "../reducers/order";
+import {cancelOrder, fetchOrderByAddress, orderActions, orderState} from "../reducers/order";
 import {useDispatch, useSelector} from "react-redux";
 import useParseTokenInfo from "../components/Widgets/useParseTokenInfo";
 import {fetchProfile, userState} from "../reducers/user";
@@ -25,15 +25,32 @@ import useOrderFavorite from "../hooks/useOrderFavorite";
 import useProtocolFeeRatio from "../hooks/useProtocolFeeRatio";
 import OrderProgress from "../components/Detail/OrderProgress";
 import {ORDER_TYPE_CHECKOUT} from "../constants/sale";
-import {getAddress} from "../utils/metamask";
 import ContentPreview from "../components/Widgets/ContentPreview";
 import ProfileImage from "../components/Widgets/ProfileImage";
 import {checkValidAccessToken} from "../utils/user";
+import {useAlert} from "react-alert";
+import ListingModal from "../components/Modal/ListingModal";
+import LowerPrice from "../components/Modal/LowerPrice";
+import {useTranslation} from "react-i18next";
 
 const Header = styled(FlexBox)`
   display: flex;
   gap: 70px;
   margin: 30px 0 95px;
+`;
+
+const SellerControl = styled.div`
+  height: 70px;
+  padding: 15px;
+  display: flex;
+  justify-content: flex-end;
+
+  > * {
+    width: 140px;
+    flex: none !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+  }
 `;
 
 const ItemPreview = styled.div`
@@ -204,6 +221,12 @@ const Button = styled(GradientButton)`
     font-weight: 400;
   `};
 
+  ${p => p.white && `
+    background: #FFFFFF;
+    border: 1px solid #9EADFF;
+    color: #3B5AFE;
+  `};
+
   &:not(:last-child) {
     margin-right: 10px;
   }
@@ -310,9 +333,11 @@ const PropertiesGrid = styled.div`
 `;
 
 const Detail = () => {
+  const {t} = useTranslation();
   const history = useHistory();
   const dispatch = useDispatch();
   const match = useRouteMatch();
+  const alert = useAlert();
 
   const {contract, tokenId} = useMemo(() => match.params, [match]);
   const [metadata, setMetadata] = useState(null);
@@ -327,6 +352,8 @@ const Detail = () => {
   const [ownerProfile, setOwnerProfile] = useState(null);
 
   const [fetch, setFetch] = useState(true);
+  const [showListingModal, setShowListingModal] = useState(false);
+  const [showLowerModal, setShowLowerModal] = useState(false);
 
   useDispatchUnmount(orderActions.clearOrder);
 
@@ -346,7 +373,7 @@ const Detail = () => {
   const usdPrice = useGetUsdPrice(price, unit);
 
   const isMakerOwned = useMemo(() => isSameAddress(owner, maker), [owner, maker]);
-  const isMine = useMemo(() => isSameAddress(maker, address), [maker, address]);
+  const isMine = useMemo(() => isSameAddress(owner, address), [owner, address]);
 
   const {isFavoriteOrder, onClickFavorite} = useOrderFavorite(idorders, () => {
     dispatch(fetchOrderByAddress({contractAddress: contract, tokenId: tokenId}));
@@ -396,6 +423,7 @@ const Detail = () => {
     }
 
     dispatch(fetchOrderByAddress({contractAddress: contract, tokenId: tokenId}));
+    setFetch(false);
   }, [contract, tokenId, fetch]);
 
   const {properties, levels} = useMemo(() => {
@@ -458,6 +486,57 @@ const Detail = () => {
     setFetch(true);
   }, []);
 
+  const handleCancelListing = useCallback(() => {
+    alert.show({
+      title: 'Are you sure you want to cancel your listing?',
+      text: 'Canceling your listing will unpublish this sale from NFTon.',
+      confirmText: 'Cancel listing',
+      cancelText: 'Never mind',
+      onConfirm: () => {
+        dispatch(cancelOrder({idorders: idorders})).then(({payload, error}) => {
+          if(error) {
+            alert.error(error.message);
+          } else if(!payload?.success) {
+            alert.error(payload?.message)
+          } else {
+            alert.show(t('CANCEL_ORDER_SUCCESS'));
+            handleRefresh();
+          }
+        })
+      }
+    });
+  }, [idorders, handleRefresh]);
+
+  const handleDelete = useCallback(() => {
+    alert.show({
+      title: 'Delete item',
+      text: 'Are you sure you want to delete this item?',
+      confirmText: 'Delete item',
+      cancelText: 'Never mind',
+      onConfirm: () => {
+        // TODO: Delete item
+        window.alert('delete');
+      }
+    });
+  }, []);
+
+  const toggleListingModal = useCallback(() => {
+    if(showListingModal) {
+      handleRefresh();
+    }
+
+    setShowListingModal(!showListingModal);
+  }, [showListingModal, handleRefresh]);
+
+
+  const toggleLowerPrice = useCallback(() => {
+    if(showLowerModal) {
+      handleRefresh();
+    }
+
+    setShowLowerModal(!showLowerModal);
+  }, [showLowerModal, handleRefresh]);
+
   const cancelOrderProgress = () => {
     setOrderType(null);
   }
@@ -465,6 +544,21 @@ const Detail = () => {
   return (
     <PageWrapper hasTopNav>
       <GradientTop color={"#929292"}/>
+      {
+        isMine && (
+          <SellerControl>
+            {
+              isMakerOwned ? <>
+                <Button white onClick={handleCancelListing}>Cancel listing</Button>
+                <Button accent onClick={toggleLowerPrice}>Lower price</Button>
+              </> : <>
+                {/*<Button white onClick={handleDelete}>Delete</Button>*/}
+                <Button accent onClick={toggleListingModal}>Sell</Button>
+              </>
+            }
+          </SellerControl>
+        )
+      }
       <Header>
         <ItemPreview>
           <ContentPreview type={type} src={image} controls/>
@@ -607,6 +701,17 @@ const Detail = () => {
         orderType && (
           <OrderProgress order={order} feeRatio={feeRatio} orderType={orderType} onRefresh={handleRefresh}
                          onCancel={cancelOrderProgress}/>
+        )
+      }
+      {
+        showListingModal && (
+          <ListingModal visible collection={collection} tokenId={tokenId} metadata={metadata}
+                        onClose={toggleListingModal}/>
+        )
+      }
+      {
+        showLowerModal && (
+          <LowerPrice order={order} currentPrice={price} currentUnit={unit} visible onClose={toggleLowerPrice}/>
         )
       }
     </PageWrapper>

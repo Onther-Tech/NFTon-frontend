@@ -4,14 +4,13 @@ import GradientButton from "../Widgets/GradientButton";
 import Switch from "../Widgets/Switch";
 import FlexBox from "../FlexBox";
 import CollectionDropdown from "../Widgets/CollectionDropdown";
-import PriceInput from "./PriceInput";
+import PriceInput from "../Widgets/PriceInput";
 import {SIZE_BIG} from "../../constants/dropdown";
 import TextField from "../Widgets/TextField";
 import TextFieldLabel from "../Widgets/TextFieldLabel";
 import FeeInfo from "../Widgets/FeeInfo";
 import {useDispatch, useSelector} from "react-redux";
 import produce from "immer";
-import MarketTypeButton from "./MarketTypeButton";
 import {approveTransferProxy, makeOrder, mint} from "../../utils/nft";
 import {mintActions, mints, mintState} from "../../reducers/mint";
 import {useHistory} from "react-router-dom";
@@ -24,33 +23,17 @@ import {useAlert} from "react-alert";
 import {useTranslation} from 'react-i18next';
 import ContentPreview from "../Widgets/ContentPreview";
 import {checkValidAccessToken} from "../../utils/user";
+import MarketTypes from "../CreateFormElements/MarketTypes";
+import Section from "../CreateFormElements/Section";
+import SectionTitle from "../CreateFormElements/SectionTitle";
+import Price from "../CreateFormElements/Price";
+import Royalty from "../CreateFormElements/Royalty";
+import UnderlineInput from "../CreateFormElements/UnderlineInput";
 
 const Wrapper = styled.div`
   width: 752px;
   margin: 0 auto;
   padding-bottom: 80px;
-`;
-
-const Section = styled.section`
-  &:not(:first-child) {
-    padding-top: 30px;
-  }
-
-  input {
-    &:not(:nth-of-type(1)) {
-      margin-left: 24px;
-    }
-  }
-`;
-
-const SectionTitle = styled.div`
-  display: flex;
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 24px;
-  color: #000000;
-  justify-content: space-between;
-  margin-bottom: 10px;
 `;
 
 const UploadSection = styled(Section)`
@@ -191,70 +174,6 @@ const CreateButton = styled(GradientButton)`
   margin-left: auto;
 `
 
-const Fee = styled.div`
-
-`;
-
-const UnderlineInput = styled(TextField)`
-  width: 100%;
-  max-width: 557px;
-  margin-top: 14px;
-
-  input {
-    &:not(:focus) {
-      border: 1px solid transparent;
-      border-bottom-color: #929292;
-      border-radius: 0;
-    }
-  }
-
-  &:focus {
-    border-radius: 5px;
-  }
-`;
-
-const TaxPercent = styled.div`
-  position: absolute;
-  width: 100%;
-  max-width: 557px;
-  text-align: right;
-  padding-right: 12px;
-  margin-top: 14px;
-  pointer-events: none;
-  color: #8E8E93;
-  font-weight: 500;
-  font-size: 16px;
-`;
-
-const WalletAddressButton = styled.div`
-  width: 100%;
-  max-width: 443px;
-  padding: 10px;
-  font-size: 16px;
-  line-height: 19px;
-  font-weight: 500;
-  background: #FAFAFA;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
-  border-radius: 31px;
-  margin-top: 12px;
-  text-align: center;
-  cursor: pointer;
-
-  input {
-    font-weight: 500;
-    font-size: 16px;
-    line-height: 19px;
-    padding: 0;
-    text-align: center;
-    outline: none;
-    border: none;
-    color: #8E8E93;
-    background-color: transparent;
-    width: 100%;
-    height: 100%;
-  }
-`;
-
 const AddFormButton = styled.div`
   width: 100%;
   border: 1px solid #C7C7CC;
@@ -281,11 +200,6 @@ const AddFormButton = styled.div`
       filter: invert(55%) sepia(87%) saturate(2824%) hue-rotate(209deg) brightness(99%) contrast(105%);
     }
   }
-`;
-
-const StyledFeeInfo = styled(FeeInfo)`
-  position: initial;
-  margin-top: 16px;
 `;
 
 const BASE_SPEC_ENTITY = {
@@ -510,13 +424,13 @@ const Form = ({bundle}) => {
             return alert.error(t('ROYALTY_NO_RECEIVER'));
           }
           if (params.royalty_ratio < 0 || params.royalty_ratio > 100) {
-            return alert.error(t('ROYALTIY_VALUE_NOT_RIGHT'));
+            return alert.error(t('ROYALTY_VALUE_NOT_RIGHT'));
           }
         }
       }
 
       const loadingAlert = alert.show({
-        title: "Please wait a bit...",
+        title: t('PLEASE_WAIT'),
         loading: true,
         disableBackdropClick: true
       });
@@ -612,62 +526,28 @@ const Form = ({bundle}) => {
         </SectionTitle>
         {
           isPutOnMarket && (
-            <FlexBox centerHorizontal>
-              <MarketTypeButton type={ORDER_FIXED_PRICE} current={marketType}
-                                onClick={() => setMarketType(ORDER_FIXED_PRICE)}/>
-              {/*
-              {
-                !bundle && (
-                  <MarketTypeButton type={ORDER_TIMED_AUCTION} current={marketType}
-                                    onClick={() => setMarketType(ORDER_TIMED_AUCTION)}/>
-                )
-              }
-              <MarketTypeButton type={ORDER_OPEN_BID} current={marketType}
-                                onClick={() => setMarketType(ORDER_OPEN_BID)}/>
-              */}
-            </FlexBox>
+            <MarketTypes current={marketType} setMarketType={setMarketType}/>
           )
         }
       </PutMarketSection>
       {
         bundle && (
-          <PriceSection>
+          <Section num>
             <SectionTitle>{t('COUNT_BUNDLE')}</SectionTitle>
             <FlexBox centerHorizontal>
               <UnderlineInput type="number" placeholder="숫자를 입력해 주세요"/>
             </FlexBox>
-          </PriceSection>
+          </Section>
         )
       }
       {
         (isPutOnMarket && marketType === ORDER_FIXED_PRICE) && (
-          <PriceSection>
-            <SectionTitle>{t('PRICE') + ' *'}</SectionTitle>
-            <FlexBox centerHorizontal>
-              <PriceInput priceName={"price"} onChangePrice={handleChange} onChangeUnit={handleChangeUnit}/>
-            </FlexBox>
-            <FlexBox centerHorizontal>
-              <StyledFeeInfo fee={2.5}/>
-            </FlexBox>
-          </PriceSection>
+          <Price priceFieldName="price" onChange={handleChange} onChangeUnit={handleChangeUnit} />
         )
       }
       {
         isPutOnMarket && (
-          <PriceSection>
-            <SectionTitle>{t('ROYALTIES') + ' *'}</SectionTitle>
-            <FlexBox centerHorizontal>
-              <UnderlineInput type="number" placeholder={t('ENTER_1_100')} name="royalty_ratio"
-                              onChange={handleChange}/>
-              <TaxPercent>%</TaxPercent>
-            </FlexBox>
-            <FlexBox centerHorizontal>
-              <WalletAddressButton>
-                <input placeholder={t('WALLET_ADDRESS') + ' *'} name="royalty_to" defaultValue={address}
-                       onChange={handleChange}/>
-              </WalletAddressButton>
-            </FlexBox>
-          </PriceSection>
+          <Royalty ratioFieldName="royalty_ratio" toFieldName="royalty_to" onChange={handleChange} />
         )
       }
       <Section>

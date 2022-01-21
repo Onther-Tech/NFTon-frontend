@@ -6,7 +6,7 @@
     "SELECT_COLLECTION": "컬렉션을 선택하세요.",
     "PRICE_NEEDED": "가격을 입력해주세요.",
     "ROYALTY_NO_RECEIVER": "인세를 받을 지갑 주소를 입력하세요.",
-    "ROYALTIY_VALUE_NOT_RIGHT": "인세의 값이 올바르지 않습니다. (0~100 사이의 숫자)",
+    "ROYALTY_VALUE_NOT_RIGHT": "인세의 값이 올바르지 않습니다. (0~100 사이의 숫자)",
     "ERROR_FROM_APPROVAL": "승인요청 중 오류가 발생했습니다.",
     "ERROR_FROM_TRADING": "거래 중 오류가 발생했습니다.",
     "COLLECTION_NAME_NEEDED": "컬렉션 이름을 입력하세요.",
@@ -21,5 +21,11 @@
     "METAMASK_NOT_INSTALLED": "메타마스크가 설치되어 있지 않습니다.",
     "NOT_ALLOWED_FILE_TYPE": "허용되지 않은 파일 유형입니다.",
     "NOT_ALLOWED_FILE_SIZE_40MB": "파일의 용량은 40MB를 초과할 수 없습니다.",
-    "WALLET_NETWORK_NOT_VALID": "지갑이 테스트 네트워크에 연결되어 있습니다, testnet.nfton.world 로 접속해주세요."
+    "WALLET_NETWORK_NOT_VALID": "지갑이 테스트 네트워크에 연결되어 있습니다, testnet.nfton.world 로 접속해주세요.",
+    "PLEASE_WAIT": "잠시만 기다려주세요...",
+    "PRICE_GREATER_THAN_ZERO": "가격은 0보다 커야합니다.",
+    "PRICE_LOWER_THAN_CURRENT": "현재 가격보다 높은 가격을 입력하세요.",
+    "UPDATE_ORDER_SUCCESS": "주문이 수정되었습니다.",
+    "REGISTER_ORDER_SUCCESS": "주문이 등록되었습니다.",
+    "CANCEL_ORDER_SUCCESS": "주문이 취소되었습니다."
 }

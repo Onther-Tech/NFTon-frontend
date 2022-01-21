@@ -16,6 +16,13 @@ export const registerOrder = createAsyncThunk(
   }
 )
 
+export const cancelOrder = createAsyncThunk(
+  namespace + '/cancelOrder',
+  async (params) => {
+    return await IndexAPI.cancelOrder(params);
+  }
+)
+
 export const fetchOrder = createAsyncThunk(
   namespace + '/fetchOrder',
   async (params) => {
@@ -71,7 +78,7 @@ export const orderSlice = createSlice({
       state.loading = false;
 
       if (Array.isArray(payload.data))
-        state.order = payload.data[0] || {};
+        state.order = payload.data[payload.data.length - 1] || {};
 
       if (Array.isArray(payload.priceHistory))
         state.priceHistory = payload.priceHistory;
@@ -87,7 +94,7 @@ export const orderSlice = createSlice({
       state.loading = false;
 
       if (Array.isArray(payload.data))
-        state.order = payload.data[0] || {};
+        state.order = payload.data[payload.data.length - 1] || {};
 
       if (Array.isArray(payload.priceHistory))
         state.priceHistory = payload.priceHistory;

@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import CloseArea, {Z_INDEX_DROPDOWN_LIST} from "../Widgets/CloseArea";
+import CloseArea, {Z_INDEX_DROPDOWN_LIST} from "./CloseArea";
 import {useCallback, useEffect, useMemo, useState} from "react";
 import FlexBox from "../FlexBox";
 import {chainList} from "../../constants/dropdown";
@@ -121,7 +121,7 @@ const Item = styled.div`
 `;
 
 
-const PriceInput = ({nested, value, priceName, onChangePrice, onChangeUnit}) => {
+const PriceInput = ({nested, value, unitFixed, priceName, onChangePrice, onChangeUnit}) => {
   const [currentItem, setCurrentItem] = useState(null);
   const [expanded, setExpanded] = useState(false);
   const { t }  = useTranslation(['common']);
@@ -132,8 +132,10 @@ const PriceInput = ({nested, value, priceName, onChangePrice, onChangeUnit}) => 
   }, [onChangeUnit]);
 
   const toggleExpand = useCallback(() => {
-    setExpanded(expanded => !expanded);
-  }, []);
+    if(!unitFixed) {
+      setExpanded(expanded => !expanded);
+    }
+  }, [unitFixed]);
 
   const handleClickItem = useCallback((index) => {
     const item = chainList[index];
@@ -157,7 +159,11 @@ const PriceInput = ({nested, value, priceName, onChangePrice, onChangeUnit}) => 
         <div className="bg"/>
         <FlexBox className="unit" onClick={toggleExpand}>
           {currentItem?.label}
-          <img src={`/img/ic_create_unit_arrow${expanded ? 'up' : 'down'}.svg`}/>
+          {
+            !unitFixed && (
+              <img src={`/img/ic_create_unit_arrow${expanded ? 'up' : 'down'}.svg`}/>
+            )
+          }
         </FlexBox>
       </Thumb>
       <List expanded={expanded}>

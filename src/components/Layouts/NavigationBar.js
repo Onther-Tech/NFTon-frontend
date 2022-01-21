@@ -39,11 +39,11 @@ const Content = styled.div`
 `;
 
 const Title = styled.div`
-  font-size: 16px;
-  font-weight: 800;
-  line-height: 24px;
+  font-weight: 900;
+  font-size: 30px;
+  line-height: 34px;
+  color: #FFFFFF;
   text-shadow: 0px 1px 3px rgba(0, 0, 0, 0.35);
-  color: #ffffff;
 `;
 
 const SearchBar = styled.div`
@@ -90,11 +90,6 @@ const Menu = styled.div`
   justify-content: flex-end;
   user-select: none;
 
-  .flag {
-    width: 30px;
-    cursor: pointer;
-  }
-
   a {
     padding: 0 15px;
     color: #ffffff;
@@ -134,6 +129,26 @@ const StyledLink = styled(Link)`
     z-index: -1;
   }
 `;
+const LangChange = styled.div`
+  display: flex;
+
+  span { 
+    padding: 0 5px;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 19px;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-align-items: center;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    cursor: pointer;
+  }
+`
 
 
 const NavigationBar = () => {
@@ -167,10 +182,14 @@ const NavigationBar = () => {
           <StyledLink to={"/create"} selected={pathname.startsWith('/create')}>Create</StyledLink>
           {/*<Link to={"/cart"} ><img src={`/img/ic_nav_cart${pathname.startsWith('/cart') ? '_on' : ''}.png`}/></Link>*/}
           <Link to={"/profile"}>
-            <img src={`/img/ic_nav_user${pathname.startsWith('/profile') ? '_on' : ''}.png`} />
+            <img src={`/img/ic_nav_user${pathname.startsWith('/profile') ? '_on' : ''}.svg`} />
           </Link>
-          <img className="flag" onClick={changeLanguage} src={`/img/ic_nav_flag_${i18n.language}.png`}/>
-
+          <a>
+            <LangChange onClick={changeLanguage} >
+              <span>{i18n.language.toUpperCase()}</span>
+              <img className="flag" src={`/img/ic_nav_lang.svg`}/>
+            </LangChange>
+          </a>
         </Menu>
       </Content>
     </Wrapper>
