@@ -28,19 +28,21 @@ const Container = ({children}) => {
     dispatch(fetchCategories());
 
     if (isMetaMask()) {
-      if(!isValidNetwork()) {
-        alert.error(t('WALLET_NETWORK_NOT_VALID'));
-        return;
-      }
 
       requestAccounts().then(([addr]) => {
+
+        if (!isValidNetwork()) {
+          alert.error(t('WALLET_NETWORK_NOT_VALID'));
+          return;
+        }
+
         const accessToken = getAccessToken(addr);
 
-        if(accessToken) {
+        if (accessToken) {
           setAuthorization(accessToken);
           dispatch(userActions.setAddress(addr));
         }
-      })
+      });
     }
 
     window.ethereum && window.ethereum.on('accountsChanged', ([newAddress]) => {

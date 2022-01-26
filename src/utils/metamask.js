@@ -10,7 +10,7 @@ export const requireMetaMask = () => {
 
 export const isValidNetwork = () => {
   if (window.ethereum) {
-    return +window.ethereum.chainId === +process.env.REACT_APP_CHAIN_ID;
+    return +window.ethereum.networkVersion === +process.env.REACT_APP_CHAIN_ID;
   }
 
   return false;
