@@ -73,7 +73,6 @@ const CollectionInfo = styled.div`
 const CollectionImage = styled.div`
   width: 170px;
   height: 170px;
-  background: linear-gradient(136.27deg, #C7C7CC 19.63%, rgba(199, 199, 204, 0) 91.41%);
   border-radius: 50%;
   overflow: hidden;
 
@@ -230,6 +229,7 @@ const Profile = () => {
         let targetCollections = [
           commonCollection,
           ...collections.map(x => ({contract: x.contract, name: x.name})), // my brand collections,
+          ...linkedContracts.map(x => ({contract: x.contract, name: x.name})), // imported collections,
           ...loggedCollections.map(x => ({contract: x.contract, name: x.contractName})), // collections from exchange events
         ];
 

@@ -287,7 +287,7 @@ const ExpandableItem = styled.div`
       cursor: pointer;
       user-select: none;
 
-      ${p => p.expanded && ` 
+      ${p => p.expanded && `
         border-bottom: 1px solid #CED6FF;
       `};
 

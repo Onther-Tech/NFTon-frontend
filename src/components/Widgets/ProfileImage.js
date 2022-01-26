@@ -13,7 +13,7 @@ const ProfileImage = ({src, ...p}) => {
   return (
     <Picture {...p}>
       <source src={src} />
-      <img src={'/img/ic_profile_big.svg'}/>
+      <img src={src || '/img/ic_profile_big.svg'}/>
     </Picture>
   )
 };
