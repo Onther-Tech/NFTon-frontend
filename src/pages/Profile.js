@@ -274,6 +274,7 @@ const Profile = () => {
     }
   }, [exchangeEvents]);
 
+  console.log(filteredList);
 
   return (
     <PageWrapper>

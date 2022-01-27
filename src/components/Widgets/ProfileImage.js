@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import {useMemo} from "react";
 
 const Picture = styled.picture`
   > * {
@@ -10,10 +11,18 @@ const Picture = styled.picture`
 `;
 
 const ProfileImage = ({src, ...p}) => {
+  const imageUrl = useMemo(() => {
+    if(!src) {
+      return '/img/ic_profile_big.svg';
+    }
+
+    return src += '?t=' + Date.now()
+  }, [src]);
+
   return (
     <Picture {...p}>
-      <source src={src} />
-      <img src={src || '/img/ic_profile_big.svg'}/>
+      <source src={imageUrl} />
+      <img src={imageUrl}/>
     </Picture>
   )
 };
