@@ -29,10 +29,8 @@ let provider;
 
 if (window.ethereum) {
   provider = new ethers.providers.Web3Provider(window.ethereum, "any");
-  console.log('set provider: window.ethereum');
 } else {
   provider = new ethers.providers.JsonRpcProvider(process.env.REACT_APP_HTTP_RPC, "any");
-  console.log('set provider: http rpc');
 }
 
 function AssetType(assetClass, data) {

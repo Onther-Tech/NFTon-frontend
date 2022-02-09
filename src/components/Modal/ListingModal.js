@@ -110,7 +110,6 @@ const ListingModal = ({collection, tokenId, metadata, visible, onClose, onConfir
   const handleChange = useCallback((e) => {
     const key = e.target.name;
     const value = e.target.value;
-    console.log(key, value)
 
     setParams(params => ({...params, [key]: value}));
   }, []);
