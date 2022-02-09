@@ -60,21 +60,41 @@ const AlertInner = styled.div`
   }
 `
 
+const ButtonWrapper = styled.div`
+  display: flex;
+  gap: 30px;
+  padding: 0 33px;
+  
+  > * {
+    flex: 1;
+  }
+`;
+
 const Button = styled(GradientButton)`
-  width: 316px;
+  max-width: 316px;
   margin: 0 auto;
+  
+  ${p => p.cancel && `
+    background: #AEAEB2;
+  `}
 `;
 
 const LoadingWrapper = styled.div`
   margin: 50px 0;
 
   img {
+    width: 38px;
+    height: 38px;
     animation: ${Spin} 1s linear infinite;
   }
 `
 
 const AlertTemplate = ({style, options, message, close}) => {
   const { t }  = useTranslation(['alert']);
+
+  const isLoading = useMemo(() => Boolean(message?.loading), [message]);
+  const isConfirm = useMemo(() => Boolean(message?.onConfirm), [message]);
+
   const handleClickBackdrop = useCallback(() => {
     if (!message.disableBackdropClick) {
       close && close();
@@ -85,7 +105,7 @@ const AlertTemplate = ({style, options, message, close}) => {
     if (message.title) {
       return message.title;
     } else if (options.type === 'error') {
-      return 'Error';
+      return t('ERROR');
     }
   }, [message, options]);
 
@@ -97,13 +117,27 @@ const AlertTemplate = ({style, options, message, close}) => {
     }
   }, [message]);
 
-  const buttonText = useMemo(() => {
-    if (typeof message === 'object' && message.buttonText) {
-      return message.buttonText;
-    } else {
-      return "닫기";
+  const cancelText = useMemo(() => {
+    if(typeof message === 'object' && message.cancelText) {
+      return message.cancelText;
     }
-  }, []);
+
+    return t('CANCEL');
+  }, [message]);
+
+  const confirmText = useMemo(() => {
+    if(typeof message === 'object' && message.confirmText) {
+      return message.confirmText;
+    }
+
+    return t('CONFIRM');
+  }, [message]);
+
+  const handleConfirm = useCallback(() => {
+    close && close();
+    message?.onConfirm && message.onConfirm();
+
+  }, [close, message]);
 
   return (
     <AlertWrapper style={style} tabIndex="-1">
@@ -120,15 +154,19 @@ const AlertTemplate = ({style, options, message, close}) => {
           )
         }
         {
-          message.loading ? (
+          isLoading ? (
             <LoadingWrapper>
-              <img src="/img/ic_modal_loading.gif"/>
+              <img src="/img/ic_spinner.svg"/>
             </LoadingWrapper>
-          ) : (
-            buttonText && (
-              <Button onClick={close}>{buttonText}</Button>
-            )
-          )
+          ) : <ButtonWrapper>
+            {
+              isConfirm && (
+                <Button cancel onClick={close}>{cancelText}</Button>
+              )
+            }
+            <Button onClick={handleConfirm}>{confirmText}</Button>
+          </ButtonWrapper>
+
         }
       </AlertInner>
     </AlertWrapper>

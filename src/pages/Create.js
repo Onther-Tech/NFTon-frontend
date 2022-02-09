@@ -4,7 +4,7 @@ import PageHeader from "../components/Layouts/PageHeader";
 import ChooseType, {CREATE_TYPE_BUNDLE, CREATE_TYPE_SINGLE} from "../components/Create/ChooseType";
 import Form from "../components/Create/Form";
 import {useRouteMatch} from "react-router-dom";
-import useWallet from "../hooks/useWallet";
+import useWalletRequired from "../hooks/useWalletRequired";
 import { useTranslation } from 'react-i18next';
 
 const Create = () => {
@@ -25,7 +25,7 @@ const Create = () => {
     }
   }, [createType]);
 
-  useWallet(true);
+  useWalletRequired(true);
 
   return (
     <PageWrapper hasTopNav>

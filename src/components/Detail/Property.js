@@ -20,18 +20,18 @@ const TypeText = styled.div`
   margin-bottom: 4px;
 `;
 
-const NameText = styled.div`
+const ValueText = styled.div`
   font-size: 18px;
   line-height: 23px;
   font-weight: 600;
   color: #000000;
 `;
 
-const Property = ({type, name, ...p}) => {
+const Property = ({type, value, ...p}) => {
   return (
     <Wrapper {...p}>
       <TypeText>{type}</TypeText>
-      <NameText>{name}</NameText>
+      <ValueText>{value}</ValueText>
     </Wrapper>
   )
 };

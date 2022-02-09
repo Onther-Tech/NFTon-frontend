@@ -4,7 +4,7 @@ import {useHistory} from "react-router-dom";
 
 const Done = ({content}) => {
     const history = useHistory();
-    
+
     const DoneSubTitle = styled.h3`
         font-size: 22px;
         margin: 0;
@@ -24,7 +24,7 @@ const Done = ({content}) => {
         <>
             <DoneWrapper>
                 <DoneSubTitle>{content.subTitle}</DoneSubTitle>
-                <img className="done-image" src="/img/ic_modal_complete.gif" />
+                <img className="done-image" src="/img/ic_spinner_done.svg" />
                 <ButtonList>
                     {content.buttons.map((data, index) => (
                         <Button onClick={() =>linkTo(data.link)}>{data.title}</Button>

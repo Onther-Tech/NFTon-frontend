@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 const Wrapper = styled.div`
   width: 100%;
-  min-width: 1162px;
+  min-width: 1140px;
   background-color: #E5E5EA;
   position: absolute;
   left: 0;
@@ -14,7 +14,7 @@ const Wrapper = styled.div`
 `;
 
 const Row = styled.div`
-  width: 1162px;
+  width: 1140px;
   margin: 80px auto 0 auto;
   position: relative;
   left: 0;
@@ -198,11 +198,11 @@ const Footer = () => {
           <div className="column">
             <div className="title">Marketplace</div>
             <MenuList>
-              <li><Link to={'/marketplace/all'}>{t('ALL_NFT')}</Link></li>
-              <li><Link to={'/marketplace/art'}>{t('ART')}</Link></li>
-              <li><Link to={'/marketplace/sports'}>{t('SPORTS')}</Link></li>
-              <li><Link to={'/marketplace/gaming'}>{t('GAMING')}</Link></li>
-              <li><Link to={'/marketplace/music'}>{t('MUSIC')}</Link></li>
+              <li><Link to={'/marketplace'}>{t('ALL_NFT')}</Link></li>
+              <li><Link to={'/marketplace?idcategories=1'}>{t('ART')}</Link></li>
+              <li><Link to={'/marketplace?idcategories=2'}>{t('GAMING')}</Link></li>
+              <li><Link to={'/marketplace?idcategories=3'}>{t('SPORTS')}</Link></li>
+              <li><Link to={'marketplace?idcategories=4'}>{t('MUSIC')}</Link></li>
             </MenuList>
           </div>
           <div className="column">
@@ -213,25 +213,25 @@ const Footer = () => {
               <li><Link to={'/profile/collections'}>My Collections</Link></li>
               <li><Link to={'/profile/settings'}>{t('SETTING')}</Link></li>
             </MenuList>
-            <div className="title">Community</div>
+            {/*<div className="title">Community</div>*/}
           </div>
           <div className="column">
             <div className="title">Create</div>
             <MenuList>
               <li><Link to={'/create/single'}>{t('SINGLE_NFT')}</Link></li>
-              <li><Link to={'/create/bundle'}>{t('BUNDLE_NFT')}</Link></li>
+              {/*<li><Link to={'/create/bundle'}>{t('BUNDLE_NFT')}</Link></li>*/}
             </MenuList>
-            <div className="title">Stats</div>
+            {/*<div className="title">Stats</div>
             <MenuList autoHeight>
               <li><Link to={'/stats'}>{t('RANKING')}</Link></li>
-            </MenuList>
+            </MenuList>*/}
           </div>
-          <div className="column">
+          {/*<div className="column">
             <div className="title">Company</div>
             <MenuList>
               <li><Link to={'/'}>About</Link></li>
             </MenuList>
-          </div>
+          </div>*/}
         </Menu>
       </Row>
       <Row>

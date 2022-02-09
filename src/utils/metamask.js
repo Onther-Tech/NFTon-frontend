@@ -8,6 +8,14 @@ export const requireMetaMask = () => {
   }
 };
 
+export const isValidNetwork = () => {
+  if (window.ethereum) {
+    return +window.ethereum.networkVersion === +process.env.REACT_APP_CHAIN_ID;
+  }
+
+  return false;
+}
+
 export const requestAccounts = async () => {
   requireMetaMask();
 
@@ -15,9 +23,7 @@ export const requestAccounts = async () => {
 }
 
 export const getAddress = () => {
-  requireMetaMask();
-
-  return window.ethereum.selectedAddress;
+  return window.ethereum && window.ethereum.selectedAddress;
 }
 
 export const personalSign = async (message) => {

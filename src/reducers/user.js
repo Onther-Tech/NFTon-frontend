@@ -2,6 +2,7 @@ import {createAsyncThunk, createSlice} from "@reduxjs/toolkit";
 import UserAPI from "../api/v2/user";
 import NftAPI from "../api/v2/nft";
 import IndexAPI from "../api/v2";
+import IndexAPIv1 from '../api/v1';
 import produce from "immer";
 
 const namespace = 'user';
@@ -14,6 +15,7 @@ const initialState = {
   profile: {},
   items: [],
   favorites: [],
+  exchangeEvents: [],
 };
 
 export const accessToken = createAsyncThunk(
@@ -66,6 +68,13 @@ export const fetchFavoriteOrders = createAsyncThunk(
   }
 )
 
+export const fetchExchangeEvent = createAsyncThunk(
+  namespace + '/fetchExchangeEvent',
+  async (params) => {
+    return await IndexAPIv1.fetchExchangeEvent(params);
+  }
+)
+
 export const userSlice = createSlice({
   name: 'user',
   initialState: initialState,
@@ -75,6 +84,9 @@ export const userSlice = createSlice({
     },
     clearAddress(state) {
       return {...state, address: initialState.address}
+    },
+    clearUser(state) {
+      return {...state, address: initialState.address, idprofiles: initialState.idprofiles, me: initialState.me}
     },
     setProfile(state, {payload}) {
       return {...state, profile: {...state.profile, ...payload}};
@@ -88,7 +100,7 @@ export const userSlice = createSlice({
       });
     },
     clearItems(state) {
-      return {...state, items: initialState.items};
+      return {...state, items: initialState.items, exchangeEvents: initialState.exchangeEvents};
     }
   },
   extraReducers: {
@@ -170,6 +182,16 @@ export const userSlice = createSlice({
       state.favorites = action.payload?.data
     },
     [fetchFavoriteOrders.rejected]: (state, action) => {
+      state.loading = false;
+    },
+    [fetchExchangeEvent.pending]: (state, action) => {
+      state.loading = true;
+    },
+    [fetchExchangeEvent.fulfilled]: (state, action) => {
+      state.loading = false;
+      state.exchangeEvents = action.payload?.data
+    },
+    [fetchExchangeEvent.rejected]: (state, action) => {
       state.loading = false;
     }
   }

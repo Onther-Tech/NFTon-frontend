@@ -5,7 +5,8 @@
     "ENTER_DESCRIPTION": "Please enter the explanation.",
     "SELECT_COLLECTION": "Choose a collection.",
     "PRICE_NEEDED": "Please enter the price.",
-    "ROYALTIY_VALUE_NOT_RIGHT": "The value of royalties is not correct. (Number between 0 and 100)",
+    "ROYALTY_NO_RECEIVER": "Please enter the royalty receiver address.",
+    "ROYALTY_VALUE_NOT_RIGHT": "The value of royalties is not correct. (Number between 0 and 100)",
     "ERROR_FROM_APPROVAL": "An error occurred during the approval request.",
     "ERROR_FROM_TRANSACTION": "An error occurred during the transaction.",
     "COLLECTION_NAME_NEEDED": "Enter the collection name.",
@@ -17,5 +18,15 @@
     "COLLECTION_EDITED": "The collection has been modified.",
     "COLLECTION_CANT_ADDED": "Collection cannot be added.",
     "COLLECTION_ALREADY_ADDED": "This collection has already been added.",
-    "METAMASK_NOT_INSTALLED": "Metamask is not installed."
+    "METAMASK_NOT_INSTALLED": "Metamask is not installed.",
+    "NOT_ALLOWED_FILE_TYPE": "This file type is not allowed.",
+    "NOT_ALLOWED_FILE_SIZE_40MB": "The file size cannot exceed 40MB.",
+    "WALLET_NETWORK_NOT_VALID": "Your wallet is connected to the test network, please switch to testnets.nfton.world",
+    "PLEASE_WAIT": "Please wait a bit...",
+    "PRICE_GREATER_THAN_ZERO": "The price must be greater than zero.",
+    "PRICE_LOWER_THAN_CURRENT": "The price must be lower than current price.",
+    "UPDATE_ORDER_SUCCESS": "Your order has been updated.",
+    "REGISTER_ORDER_SUCCESS": "Your order has been registered.",
+    "CANCEL_ORDER_SUCCESS": "Your order has been canceled."
+
 }

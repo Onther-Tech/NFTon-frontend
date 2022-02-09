@@ -6,7 +6,7 @@ import {abi as brandCollectionABI} from '../abi/ERC721Collection.json';
 import {abi as commonCollectionABI} from '../abi/ERC721Public.json';
 
 import {ethers} from 'ethers';
-import {dec, enc, ERC20, ERC721, ETH, id} from "./assets";
+import {dec, enc, ERC20, ERC721, ETH, id, ORDER_DATA_V1} from "./assets";
 import {
   assets,
   assetsByAddress,
@@ -25,7 +25,15 @@ import numeral from "numeral";
 import axios from "axios";
 import {isNull} from "./index";
 
-const provider = new ethers.providers.Web3Provider(window.ethereum);
+let provider;
+
+if (window.ethereum) {
+  provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+  console.log('set provider: window.ethereum');
+} else {
+  provider = new ethers.providers.JsonRpcProvider(process.env.REACT_APP_HTTP_RPC, "any");
+  console.log('set provider: http rpc');
+}
 
 function AssetType(assetClass, data) {
   return {assetClass, data}
@@ -127,7 +135,44 @@ export const approveTransferProxy = async (collectionAddress) => {
   return tx.hash;
 }
 
-export const makeOrder = async (collection, tokenId, asset, marketType, price, unit, start, end) => {
+export const encodeRoyaltyData = (data) => {
+  return ethers.utils.defaultAbiCoder.encode(
+    ["tuple(tuple(address,uint96)[], tuple(address,uint96)[])"],
+    [data]
+  );
+}
+
+export const decodeRoyaltyData = (data) => {
+  return ethers.utils.defaultAbiCoder.decode(
+    ["tuple(tuple(address,uint96)[], tuple(address,uint96)[])"],
+    data
+  );
+}
+
+export const getRoyaltyInfo = (data) => {
+  const decoded = decodeRoyaltyData(data);
+  if(decoded && decoded.length > 0) {
+    const [address, ratio] = decoded[0][1][0];
+
+    return {
+      address: address,
+      ratio: ethers.utils.formatUnits(ratio.toString(), FEE_DECIMAL) * 100
+    }
+  }
+}
+
+export const isValidMetadata = (metadata) => {
+  return (
+    metadata.hasOwnProperty('attributes') &&
+    metadata.hasOwnProperty('creator') &&
+    metadata.hasOwnProperty('description') &&
+    metadata.hasOwnProperty('image') &&
+    metadata.hasOwnProperty('name') &&
+    metadata.hasOwnProperty('type')
+  );
+}
+
+export const makeOrder = async (collection, tokenId, asset, marketType, price, unit, royaltyRatio, royaltyTo, start, end) => {
   const signer = provider.getSigner();
   const address = await signer.getAddress();
   const salt = generateSalt();
@@ -154,10 +199,15 @@ export const makeOrder = async (collection, tokenId, asset, marketType, price, u
   let takeAsset;
 
   if (unit === 'ETH') {
-    takeAsset = Asset(ETH, '0x', parseEther(price).toString());
+    takeAsset = Asset(ETH, enc('0x0000000000000000000000000000000000000000'), parseEther(price).toString());
   } else {
     takeAsset = Asset(ERC20, enc(assets[unit]), parseUnits(price, decimals[unit]).toString());
   }
+
+  const dataType = ORDER_DATA_V1;
+  const payouts = [];
+  const origins = [[royaltyTo, (royaltyRatio / 100) * 10 ** FEE_DECIMAL]];
+  const encodedData = encodeRoyaltyData([payouts, origins])
 
   const order = Order(
     address.toLowerCase(),
@@ -167,8 +217,8 @@ export const makeOrder = async (collection, tokenId, asset, marketType, price, u
     salt,
     start || 0,
     end || 0,
-    '0xffffffff',
-    '0x'
+    dataType,
+    encodedData
   );
 
   const sign = await signOrder(order, signer, EXCHANGE);
@@ -240,20 +290,14 @@ export const checkApproved = async (order) => {
   return approveAmount.lte(allowance);
 }
 
-export const approveToPayment = async (order) => {
+export const approveMax = async (order) => {
   const signer = provider.getSigner();
-  const exchange = new ethers.Contract(EXCHANGE, exchangeABI, provider);
-  const fee = await exchange.protocolFee();
 
   const assetData = order.takeAsset.assetType.data;
   const erc20Address = dec(['address'], assetData)[0];
   const erc20Contract = new ethers.Contract(erc20Address, erc20ABI, provider);
 
-  const value = ethers.BigNumber.from(order.takeAsset.value);
-  const feeAmount = value.mul(fee).div(ethers.BigNumber.from(10 ** FEE_DECIMAL));
-  const approveAmount = value.add(feeAmount);
-
-  const tx = await erc20Contract.connect(signer).approve(order.erc20TransferProxy, approveAmount);
+  const tx = await erc20Contract.connect(signer).approve(order.erc20TransferProxy, ethers.constants.MaxUint256);
 
   const receipt = await tx.wait();
   const approvalEvent = receipt.events.find(x => x.event === 'Approval');
@@ -265,6 +309,7 @@ export const matchOrders = async (order) => {
   const signer = provider.getSigner();
   const address = await signer.getAddress();
   const exchange = new ethers.Contract(EXCHANGE, exchangeABI, provider);
+  const protocolFee = await exchange.protocolFee();
 
   const makeOrder = Order(
     order.maker,
@@ -286,13 +331,16 @@ export const matchOrders = async (order) => {
     order.salt,
     order.start,
     order.end,
-    order.dataType,
-    order.data
+    "0xffffffff",
+    "0x"
   );
 
   let value = 0;
-  if (takeOrder.takeAsset.assetType.assetClass === ETH) {
-    value = takeOrder.takeAsset.value;
+  if (takeOrder.makeAsset.assetType.assetClass === ETH) {
+    const eth = ethers.BigNumber.from(takeOrder.makeAsset.value);
+    const feeAmount = eth.mul(protocolFee).div(ethers.BigNumber.from(10 ** FEE_DECIMAL));
+
+    value = eth.add(feeAmount).toString();
   }
 
   const tx = await exchange.connect(signer).matchOrders(
@@ -332,17 +380,19 @@ export const getTokenURI = async (contractAddress, tokenId) => {
   return tokenURI;
 }
 
+export const hasERC721Interface = async (contractAddress) => {
+  const contract = new ethers.Contract(contractAddress, brandCollectionABI, provider);
+  return await contract.supportsInterface('0x80ac58cd');
+}
+
 export const getCollectionInfo = async (contractAddress) => {
   const collection = {};
 
   const collectionContract = new ethers.Contract(contractAddress, brandCollectionABI, provider);
-  const erc721Interface = await collectionContract['_INTERFACE_ID_ERC721']();
 
-  if (erc721Interface === '0x80ac58cd') {
-    collection.contract = contractAddress;
-    collection.name = await collectionContract.name();
-    collection.symbol = await collectionContract.symbol();
-  }
+  collection.contract = contractAddress;
+  collection.name = await collectionContract.name();
+  collection.symbol = await collectionContract.symbol();
 
   return collection;
 }
@@ -359,13 +409,6 @@ export const getTokenInfo = async (contractAddress, tokenId) => {
     metadata: {},
     collection: {},
     owner: null,
-  }
-
-  try {
-    returnValues.owner = await getOwnerOf(contractAddress, tokenId);
-  } catch (e) {
-    console.log(`call ownerOf(${tokenId}) error`);
-    return returnValues;
   }
 
   let tokenURI = await getTokenURI(contractAddress, tokenId);
@@ -391,7 +434,7 @@ export const getOwnedTokensOfCollection = async (collectionAddress, owner) => {
   try {
     balanceOf = await contract.balanceOf(owner);
   } catch (e) {
-    console.error('error', e)
+    console.error(`fail to get balance of ${owner} (collection: ${collectionAddress})`, e.message);
   }
 
   for (let i = 0; i < balanceOf; i++) {
@@ -399,7 +442,7 @@ export const getOwnedTokensOfCollection = async (collectionAddress, owner) => {
       const tokenId = await contract.tokenOfOwnerByIndex(owner, i);
       tokens.push(tokenId.toNumber());
     } catch (e) {
-      console.error('error2', e)
+      console.error(`fail to get owned token info (${owner}'s ${collectionAddress}:${i})`, e.message);
     }
   }
 
@@ -442,13 +485,13 @@ export const parsePrice = (takeAsset) => {
 
   let price, unit;
 
-  if (data === '0x') {
+  if (data === '0x' || data === enc('0x0000000000000000000000000000000000000000')) {
     price = ethers.utils.formatEther(takeAsset.value);
     unit = 'ETH';
   } else {
     const contract = parseErc20AssetData(data);
     price = ethers.utils.formatEther(takeAsset.value);
-    unit = assetsByAddress[contract];
+    unit = assetsByAddress[contract.toLowerCase()];
   }
 
   return {

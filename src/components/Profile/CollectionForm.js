@@ -5,7 +5,7 @@ import TextFieldLabel from "../Widgets/TextFieldLabel";
 import TextField from "../Widgets/TextField";
 import GradientButton from "../Widgets/GradientButton";
 import {useCallback, useEffect, useMemo, useState} from "react";
-import useWallet from "../../hooks/useWallet";
+import useWalletRequired from "../../hooks/useWalletRequired";
 import {useDispatch, useSelector} from "react-redux";
 import {readAsDataURL} from "../../utils";
 import produce from "immer";
@@ -16,10 +16,11 @@ import {useHistory} from "react-router-dom";
 import {registerCollection, updateCollection} from "../../reducers/collection";
 import {SIZE_BIG} from "../../constants/dropdown";
 import CategoryDropdown from "../Widgets/CategoryDropdown";
-import {categoryState, fetchCategories} from "../../reducers/category";
+import {categoryState} from "../../reducers/category";
 import {PHOTO_CHANGED, PHOTO_NO_CHANGE} from "../../constants/api";
 import {useAlert} from "react-alert";
-import { useTranslation } from 'react-i18next';
+import {useTranslation} from 'react-i18next';
+import {checkValidAccessToken} from "../../utils/user";
 
 
 const Content = styled.div`
@@ -173,7 +174,7 @@ const CollectionForm = ({collection}) => {
   const history = useHistory();
   const dispatch = useDispatch();
   const alert = useAlert();
-  const { t }  = useTranslation(['common','alert']);
+  const {t} = useTranslation(['common', 'alert']);
 
   const {categoriesForDropdown} = useSelector(categoryState);
 
@@ -190,7 +191,7 @@ const CollectionForm = ({collection}) => {
   const [coverPreview, setCoverPreview] = useState('');
   const [disabled, setDisabled] = useState(false);
 
-  useWallet();
+  useWalletRequired(true);
 
   useEffect(() => {
     if (collection) {
@@ -262,65 +263,67 @@ const CollectionForm = ({collection}) => {
   }, []);
 
   const handleConfirm = useCallback(() => {
-    if (!params.name) {
-      return alert.error(t('COLLECTION_NAME_NEEDED'));
-    }
-    if (params.name < 4) {
-      return alert.error(t('COLLECTION_NAME_MORE_4'));
-    }
-    if (!params.symbol) {
-      return alert.error(t('SYMBOL_NEEDED'));
-    }
-    if (!params.description) {
-      return alert.error(t('COLLECTION_DESCRIPTION_NEEDED'));
-    }
-    if (!params.categoryIdcategories) {
-      return alert.error(t('SELECT_CATEGORY'));
-    }
+    checkValidAccessToken(history, dispatch, () => {
+      if (!params.name) {
+        return alert.error(t('COLLECTION_NAME_NEEDED'));
+      }
+      if (params.name < 4) {
+        return alert.error(t('COLLECTION_NAME_MORE_4'));
+      }
+      if (!params.symbol) {
+        return alert.error(t('SYMBOL_NEEDED'));
+      }
+      if (!params.description) {
+        return alert.error(t('COLLECTION_DESCRIPTION_NEEDED'));
+      }
+      if (!params.categoryIdcategories) {
+        return alert.error(t('SELECT_CATEGORY'));
+      }
 
-    const loadingAlert = alert.show({
-      title: "Please wait a bit...",
-      loading: true,
-      disableBackdropClick: true
+      const loadingAlert = alert.show({
+        title: t('PLEASE_WAIT'),
+        loading: true,
+        disableBackdropClick: true
+      });
+
+      setDisabled(true);
+
+      if (isCreate) {
+        createCollection(params.name, params.symbol)
+          .then(async (contractAddress) => {
+            return dispatch(registerCollection({
+              ...params,
+              contract: contractAddress
+            }));
+          })
+          .then(({payload, error}) => {
+            if (error) {
+              throw error;
+            }
+
+            alert.show(t('COLLECTION_ADDED'));
+            history.replace('/profile/collections');
+          })
+          .finally(() => {
+            setDisabled(false);
+            loadingAlert.close();
+          });
+      } else {
+        dispatch(updateCollection(params))
+          .then(({payload, error}) => {
+            if (error) {
+              throw error;
+            }
+
+            alert.show(t('COLLECTION_EDITED'));
+            history.replace('/profile/collections');
+          })
+          .finally(() => {
+            setDisabled(false);
+            loadingAlert.close();
+          });
+      }
     });
-
-    setDisabled(true);
-
-    if (isCreate) {
-      createCollection(params.name, params.symbol)
-        .then(async (contractAddress) => {
-          return dispatch(registerCollection({
-            ...params,
-            contract: contractAddress
-          }));
-        })
-        .then(({payload, error}) => {
-          if (error) {
-            throw error;
-          }
-
-          alert.show(t('COLLECTION_ADDED'));
-          history.replace('/profile/collections');
-        })
-        .finally(() => {
-          setDisabled(false);
-          loadingAlert.close();
-        });
-    } else {
-      dispatch(updateCollection(params))
-        .then(({payload, error}) => {
-          if (error) {
-            throw error;
-          }
-
-          alert.show(t('COLLECTION_EDITED'));
-          history.replace('/profile/collections');
-        })
-        .finally(() => {
-          setDisabled(false);
-          loadingAlert.close();
-        });
-    }
   }, [params]);
 
   return (
@@ -345,8 +348,8 @@ const CollectionForm = ({collection}) => {
           <Row>
             <TextFieldLabel
               tooltip={"This image will appear at the top of your collection page. Avoid including too much text in this banner image, as the dimensions change on different devices. 1400 x 400 recommended."}>
-                {t('BANNER_IMAGE')}
-              </TextFieldLabel>
+              {t('BANNER_IMAGE')}
+            </TextFieldLabel>
             <InputDescription>{t('DESCRIPTION_OF_FILE_TYPE')}</InputDescription>
             <SmallCoverImage src={coverPreview} onClick={handleClickCoverChange}>
               <div className="hover">
@@ -367,7 +370,8 @@ const CollectionForm = ({collection}) => {
             <TextField label="URL" multiLine rows={1} name="url" value={params.url || ''} onChange={handleChange}/>
           </Row>
           <Row>
-            <TextField label={t('COLLECTION_DESCRIPTION')} name="description" value={params.description || ''} onChange={handleChange}/>
+            <TextField label={t('COLLECTION_DESCRIPTION')} name="description" value={params.description || ''}
+                       onChange={handleChange}/>
           </Row>
           <Row>
             <TextFieldLabel>{t('CATEGORY')}</TextFieldLabel>
@@ -389,7 +393,8 @@ const CollectionForm = ({collection}) => {
             <SocialLink icon={'/img/ic_instagram.svg'} name="instagram" value={params.instagram || ''}
                         onChange={handleChange}/>
           </Row>
-          <ConfirmButton disabled={disabled} onClick={handleConfirm}>{isCreate ? t('CREATE') : t('DONE')}</ConfirmButton>
+          <ConfirmButton disabled={disabled}
+                         onClick={handleConfirm}>{isCreate ? t('CREATE') : t('DONE')}</ConfirmButton>
         </div>
         <div>
           <TextFieldLabel>{t('PREVIEW')}</TextFieldLabel>

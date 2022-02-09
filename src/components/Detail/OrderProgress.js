@@ -2,7 +2,7 @@ import OrderStepModal from "../Modal/OrderStepModal";
 import {useCallback, useEffect, useState} from "react";
 import {ORDER_TYPE_BID, ORDER_TYPE_CHECKOUT} from "../../constants/sale";
 import useParseTokenInfo from "../Widgets/useParseTokenInfo";
-import {approveToPayment, checkApproved, getBalance, matchOrders} from "../../utils/nft";
+import {approveMax, checkApproved, getBalance, matchOrders} from "../../utils/nft";
 import numeral from "numeral";
 import {useDispatch} from "react-redux";
 import {orderActions, registerOrderBuy} from "../../reducers/order";
@@ -17,7 +17,6 @@ const ORDER_STEP_TRANSACTION = 3;
 const ORDER_STEP_SUCCESS = 4;
 
 const OrderProgress = ({order, feeRatio, orderType, onCancel}) => {
-
   const { t }  = useTranslation(['alert']);
   const dispatch = useDispatch();
   const alert = useAlert();
@@ -70,7 +69,7 @@ const OrderProgress = ({order, feeRatio, orderType, onCancel}) => {
           return;
         }
 
-        isApproved = await approveToPayment(order);
+        isApproved = await approveMax(order);
         if (isApproved) {
           setApproved(true);
         } else {
@@ -114,8 +113,11 @@ const OrderProgress = ({order, feeRatio, orderType, onCancel}) => {
           return;
         }
 
+<<<<<<< HEAD
         // console.log(payload);
 
+=======
+>>>>>>> d6a318f824e61173743bb3622c3e9e212a8168d9
         setOrderStep(ORDER_STEP_SUCCESS);
         dispatch(orderActions.clearOrder());
 

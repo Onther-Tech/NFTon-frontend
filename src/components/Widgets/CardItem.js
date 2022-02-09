@@ -7,9 +7,10 @@ import {useDispatch, useSelector} from "react-redux";
 import {userState} from "../../reducers/user";
 import useOrderFavorite from "../../hooks/useOrderFavorite";
 import {isNull} from "../../utils";
+import ContentPreview from "./ContentPreview";
 
 export const CARD_WIDTH = '267px';
-export const CARD_WIDTH_SMALL = '213px';
+export const CARD_WIDTH_SMALL = '208px';
 
 const Wrapper = styled.div`
   width: 100%;
@@ -80,13 +81,13 @@ const ImageWrapper = styled.div`
     padding-top: 100%;
   }
 
-  img {
+  * {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: cover !important;
     border-radius: 8px;
     background-color: #F2F2F7;
   }
@@ -138,13 +139,10 @@ const InfoWrapper = styled.div`
 
 const CardItem = ({small, contract, collectionName, tokenId, metadata, order}) => {
   const history = useHistory();
-  const dispatch = useDispatch()
-
-  const {favorites} = useSelector(userState);
 
   const [statusText, setStatusText] = useState('');
 
-  const {idorders, name, image, type, favoriteCount, price, unit} = useParseTokenInfo(metadata, order);
+  const {idorders, name, image, type, price, unit} = useParseTokenInfo(metadata, order);
   const {isFavoriteOrder, onClickFavorite} = useOrderFavorite(idorders);
 
   const contentTypeIcon = useMemo(() => {
@@ -204,7 +202,7 @@ const CardItem = ({small, contract, collectionName, tokenId, metadata, order}) =
           }
         </HeaderWrapper>
         <ImageWrapper>
-          <img src={image || ''} onError={(e) => e.target.src = '/img/ic_card_nopicture.svg'}/>
+          <ContentPreview type={type} src={image} />
         </ImageWrapper>
         <InfoWrapper>
           <div>

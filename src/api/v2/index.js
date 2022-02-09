@@ -9,6 +9,19 @@ const IndexAPI = {
     ).then(res => res.data);
   },
 
+  async cancelOrder({idorders}) {
+    return await getAxios().delete(
+      process.env.REACT_APP_API_ENDPOINT_V2 + '/orders/' + idorders,
+    ).then(res => res.data);
+  },
+
+  async modifyOrder({idorders, jsonBody}) {
+    return await getAxios().put(
+      process.env.REACT_APP_API_ENDPOINT_V2 + '/orders/' + idorders,
+      jsonBody
+    ).then(res => res.data);
+  },
+
   async fetchOrders({chainId, platform, maker, type, status, includeCategoryName}) {
     return await getAxios().get(
       process.env.REACT_APP_API_ENDPOINT_V2 + '/orders',

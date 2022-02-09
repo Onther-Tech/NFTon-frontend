@@ -6,7 +6,7 @@ import styled from "styled-components";
 import GradientButton from "../components/Widgets/GradientButton";
 import {useHistory} from "react-router-dom";
 import {cartList} from "../dummy/cart";
-import useWallet from "../hooks/useWallet";
+import useWalletRequired from "../hooks/useWalletRequired";
 
 const Content = styled.div`
   display: flex;
@@ -98,7 +98,7 @@ const Cart = () => {
 
   const descriptionText = useMemo(() => `총 ${rows.length}개의 상품이 담겨있습니다.`, [rows]);
 
-  useWallet(true);
+  useWalletRequired(true);
 
   useEffect(() => {
     setRows(cartList);

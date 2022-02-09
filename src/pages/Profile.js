@@ -5,22 +5,23 @@ import CardList from "../components/Layouts/CardList";
 import {useEffect, useMemo, useState} from "react";
 import PageTab from "../components/Widgets/PageTab";
 import SettingDropdown from "../components/Profile/SettingDropdown";
-import useWallet from "../hooks/useWallet";
+import useWalletRequired from "../hooks/useWalletRequired";
 import {useDispatch, useSelector} from "react-redux";
-import {fetchFavoriteOrders, fetchProfile, userActions, userState} from "../reducers/user";
+import {fetchExchangeEvent, fetchFavoriteOrders, fetchProfile, userActions, userState} from "../reducers/user";
 import {useRouteMatch} from "react-router-dom";
 import {collectionState, fetchLinkedContracts, fetchMyCollections} from "../reducers/collection";
 import {getOwnedTokensOfCollection, getTokenInfo} from "../utils/nft";
 import {commonCollection} from "../constants/contract";
-import {isSameAddress} from "../utils";
+import {isNull, isSameAddress} from "../utils";
 import useDispatchUnmount from "../hooks/useDispatchUnmount";
 import EmptyView from "../components/Widgets/EmptyView";
 import {filterAndSortList} from "../utils/filter";
-import { useTranslation } from 'react-i18next';
+import {useTranslation} from 'react-i18next';
+import ProfileImage from "../components/Widgets/ProfileImage";
 
 const TopCover = styled.div`
   width: 100%;
-  min-width: 1162px;
+  min-width: 1140px;
   height: 368px;
   display: block;
   position: absolute;
@@ -72,14 +73,12 @@ const CollectionInfo = styled.div`
 const CollectionImage = styled.div`
   width: 170px;
   height: 170px;
-  background-color: #E5E5EA;
   border-radius: 50%;
   overflow: hidden;
 
-  > img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+  img {
+    padding: 20px;
+    background-color: transparent;
   }
 `;
 
@@ -155,19 +154,20 @@ const TAB_CREATED = 2;
 const TAB_IMPORTED = 3;
 
 const Profile = () => {
-  const { t }  = useTranslation(['common']);
+  const {t} = useTranslation(['common']);
   const dispatch = useDispatch();
   const match = useRouteMatch();
 
-  const {address, profile, items, favorites} = useSelector(userState);
+  const {address, profile, items, favorites, exchangeEvents} = useSelector(userState);
   const {collections, linkedContracts} = useSelector(collectionState);
 
   const [filter, setFilter] = useState({});
   const [sortType, setSortType] = useState(0);
 
+  const [loggedCollections, setLoggedCollections] = useState([]);
   const [filteredList, setFilteredList] = useState([]);
   const [currentTab, setCurrentTab] = useState(0);
-  const [searchText, setSearchText] = useState('')
+  const [searchText, setSearchText] = useState('');
 
   const profileAddress = useMemo(() => {
     if (match.params?.address) {
@@ -181,7 +181,7 @@ const Profile = () => {
     return address === profile.account;
   }, [address, profile])
 
-  useWallet(true);
+  useWalletRequired(!profileAddress);
   useDispatchUnmount(userActions.clearItems);
 
   useEffect(() => {
@@ -189,6 +189,7 @@ const Profile = () => {
       dispatch(fetchProfile({address: profileAddress}));
       dispatch(fetchMyCollections({address: profileAddress}));
       dispatch(fetchLinkedContracts({address: profileAddress}));
+      dispatch(fetchExchangeEvent({account: profileAddress}));
     }
   }, [profileAddress]);
 
@@ -212,7 +213,7 @@ const Profile = () => {
         collectionName: x.makeInfo?.collectionName
       }));
     } else if (currentTab === TAB_CREATED) {
-      arr = items.filter(x => isSameAddress(x.metadata.creator, profileAddress));
+      arr = items.filter(x => isSameAddress(x.metadata?.creator, profileAddress));
     } else if (currentTab === TAB_IMPORTED) {
       arr = items.filter(x => linkedContracts.findIndex(y => isSameAddress(x.contract, y.contract)) !== -1);
     }
@@ -220,13 +221,21 @@ const Profile = () => {
     setFilteredList(filterAndSortList(arr, filter, sortType, searchText));
   }, [favorites, linkedContracts, currentTab, items, filter, sortType, searchText]);
 
-
   useEffect(() => {
     if (profileAddress) {
       const arr = [];
 
       (async () => {
-        for (let collection of [...collections, commonCollection]) {
+        let targetCollections = [
+          commonCollection,
+          ...collections.map(x => ({contract: x.contract, name: x.name})), // my brand collections,
+          ...linkedContracts.map(x => ({contract: x.contract, name: x.name})), // imported collections,
+          ...loggedCollections.map(x => ({contract: x.contract, name: x.contractName})), // collections from exchange events
+        ];
+
+        targetCollections = targetCollections.filter((x, i) => targetCollections.findIndex(y => y.contract === x.contract) === i);
+
+        for (let collection of targetCollections) {
           const tokenIds = await getOwnedTokensOfCollection(collection.contract, profileAddress);
           for (let tokenId of tokenIds) {
             arr.push({
@@ -256,25 +265,30 @@ const Profile = () => {
         }
       })();
     }
-  }, [collections, profileAddress]);
+  }, [collections, profileAddress, loggedCollections]);
+
+  useEffect(() => {
+    if (Array.isArray(exchangeEvents)) {
+      const contracts = exchangeEvents.filter(x => !isNull(x.contract));
+      setLoggedCollections([...new Set(contracts)]); // remove duplicate
+    }
+  }, [exchangeEvents]);
+
+  console.log(filteredList);
 
   return (
     <PageWrapper>
       <TopCover>
         {
-          profile.cover && (
+          profile.cover?(
             <img src={profile.cover}/>
-          )
+          ):<img src={'img/ic_profile_background.png'}/>
         }
       </TopCover>
       <Header>
         <CollectionInfo>
           <CollectionImage>
-            {
-              profile.photo && (
-                <img src={profile.photo}/>
-              )
-            }
+            <ProfileImage src={profile.photo} />
           </CollectionImage>
           <div className="title">{profile.user_name || profileAddress}</div>
           {/*

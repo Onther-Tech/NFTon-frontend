@@ -167,17 +167,17 @@ const FilterSort = ({hideCategory, onSearch, onChangeFilter, onClickGridType, on
     {value: 'all', label: '모든 NFTs'},
     {value: CREATE_TYPE_SINGLE, label: t('SINGLE_ITEM')},
     {value: CREATE_TYPE_BUNDLE, label: t('BUNDLE_ITEM')},
-  ]), []);
+  ]), [t]);
 
   const sortTypes = useMemo(() => ([
-    {value: SORT_TYPE_RECENTLY_LISTED, label: 'Recently Listed'},
-    {value: SORT_TYPE_RECENTLY_CREATED, label: t('RECENTLY_CREATED')},
+    {value: SORT_TYPE_RECENTLY_LISTED, label: t('RECENTLY_LISTED')},
+    // {value: SORT_TYPE_RECENTLY_CREATED, label: t('RECENTLY_CREATED')},
     {value: SORT_TYPE_RECENTLY_SOLD, label: t('RECENTLY_SOLD')},
     // {value: SORT_TYPE_PRICE_LOW_TO_HIGH, label: t('PRICE_LOW_TO_HIGH')},
     // {value: SORT_TYPE_PRICE_HIGH_TO_LOW, label: t('PRICE_HIGH_TO_LOW')},
     {value: SORT_TYPE_MOST_LIKED, label: t('MOST_LIKED')},
     // {value: SORT_TYPE_MOST_VIEWED, label: t('MOST_VIEWED')},
-  ]), []);
+  ]), [t]);
 
   const handleChangeSearch = useCallback((e) => {
     onSearch && onSearch(e.target.value)

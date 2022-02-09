@@ -156,8 +156,10 @@ const Item = styled.div`
 
 
 const CollectionDropdown = ({size = SIZE_SMALL, items = [], value, defaultLabel, onChange}) => {
+  const [filteredList, setFilteredList] = useState([]);
   const [currentItem, setCurrentItem] = useState(null);
   const [expanded, setExpanded] = useState(false);
+  const [searchText, setSearchText] = useState('');
 
   const toggleExpand = useCallback(() => {
     setExpanded(expanded => !expanded);
@@ -175,6 +177,14 @@ const CollectionDropdown = ({size = SIZE_SMALL, items = [], value, defaultLabel,
     setCurrentItem(items.find(x => x.value === value) || defaultItem);
   }, [items, defaultLabel, value]);
 
+  useEffect(() => {
+    if(!searchText) {
+      setFilteredList(items);
+    } else {
+      setFilteredList(items.filter(x => x.label.toLowerCase().indexOf(searchText.toLowerCase()) !== -1))
+    }
+  }, [searchText, items]);
+
   const label = useMemo(() => currentItem?.label || defaultLabel, [currentItem, defaultLabel]);
 
   return (
@@ -185,16 +195,16 @@ const CollectionDropdown = ({size = SIZE_SMALL, items = [], value, defaultLabel,
       </Thumb>
       <ListWrapper size={size} expanded={expanded}>
         <SearchBar>
-          <input placeholder="컬렉션 검색"/>
+          <input placeholder="Search" onChange={(e) => setSearchText(e.target.value)}/>
         </SearchBar>
         <List>
           {
-            items.map((x, i) => (
+            filteredList.map((x, i) => (
               <Item key={i} onClick={() => handleClickItem(i)}>
                 <div className="image">
                   {
-                    x.symbol_link && (
-                      <img className="image" src={x.symbol_link} alt=""/>
+                    x.image && (
+                      <img className="image" src={x.image} alt=""/>
                     )
                   }
                 </div>

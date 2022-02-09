@@ -10,12 +10,12 @@ import Tooltip from "../components/Widgets/Tooltip";
 import Property from "../components/Detail/Property";
 import Level from "../components/Detail/Level";
 import TokenInfo from "../components/Detail/TokenInfo";
-import {Link, useRouteMatch} from "react-router-dom";
-import {getTokenInfo} from "../utils/nft";
-import {fetchOrderByAddress, orderActions, orderState} from "../reducers/order";
+import {Link, useHistory, useRouteMatch} from "react-router-dom";
+import {getOwnerOf, getTokenInfo} from "../utils/nft";
+import {cancelOrder, fetchOrderByAddress, orderActions, orderState} from "../reducers/order";
 import {useDispatch, useSelector} from "react-redux";
 import useParseTokenInfo from "../components/Widgets/useParseTokenInfo";
-import {fetchProfile} from "../reducers/user";
+import {fetchProfile, userState} from "../reducers/user";
 import useGetUsdPrice from "../hooks/useGetPrice";
 import {fetchCollection} from "../reducers/collection";
 import useDispatchUnmount from "../hooks/useDispatchUnmount";
@@ -25,17 +25,37 @@ import useOrderFavorite from "../hooks/useOrderFavorite";
 import useProtocolFeeRatio from "../hooks/useProtocolFeeRatio";
 import OrderProgress from "../components/Detail/OrderProgress";
 import {ORDER_TYPE_CHECKOUT} from "../constants/sale";
+import ContentPreview from "../components/Widgets/ContentPreview";
+import ProfileImage from "../components/Widgets/ProfileImage";
+import {checkValidAccessToken} from "../utils/user";
+import {useAlert} from "react-alert";
+import ListingModal from "../components/Modal/ListingModal";
+import LowerPrice from "../components/Modal/LowerPrice";
+import {useTranslation} from "react-i18next";
 
 const Header = styled(FlexBox)`
   display: flex;
-  gap: 95px;
-  padding-left: 72px;
+  gap: 70px;
   margin: 30px 0 95px;
 `;
 
-const ItemImage = styled.img`
-  width: 509px;
-  height: 509px;
+const SellerControl = styled.div`
+  height: 70px;
+  padding: 15px;
+  display: flex;
+  justify-content: flex-end;
+
+  > * {
+    width: 140px;
+    flex: none !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+  }
+`;
+
+const ItemPreview = styled.div`
+  width: 559px;
+  height: 559px;
   border-radius: 25px;
 `;
 
@@ -201,6 +221,12 @@ const Button = styled(GradientButton)`
     font-weight: 400;
   `};
 
+  ${p => p.white && `
+    background: #FFFFFF;
+    border: 1px solid #9EADFF;
+    color: #3B5AFE;
+  `};
+
   &:not(:last-child) {
     margin-right: 10px;
   }
@@ -239,7 +265,7 @@ const OwnerWrapper = styled(FlexBox)`
 
 const Content = styled(FlexBox)`
   align-items: flex-start;
-  gap: 24px;
+  gap: 25px;
 
   > div {
     flex: 1;
@@ -261,7 +287,7 @@ const ExpandableItem = styled.div`
       cursor: pointer;
       user-select: none;
 
-      ${p => p.expanded && ` 
+      ${p => p.expanded && `
         border-bottom: 1px solid #CED6FF;
       `};
 
@@ -307,12 +333,16 @@ const PropertiesGrid = styled.div`
 `;
 
 const Detail = () => {
+  const {t} = useTranslation();
+  const history = useHistory();
   const dispatch = useDispatch();
   const match = useRouteMatch();
+  const alert = useAlert();
 
   const {contract, tokenId} = useMemo(() => match.params, [match]);
   const [metadata, setMetadata] = useState(null);
   const [owner, setOwner] = useState(null);
+  const {address} = useSelector(userState);
   const {order, priceHistory} = useSelector(orderState);
 
   const feeRatio = useProtocolFeeRatio();
@@ -322,6 +352,8 @@ const Detail = () => {
   const [ownerProfile, setOwnerProfile] = useState(null);
 
   const [fetch, setFetch] = useState(true);
+  const [showListingModal, setShowListingModal] = useState(false);
+  const [showLowerModal, setShowLowerModal] = useState(false);
 
   useDispatchUnmount(orderActions.clearOrder);
 
@@ -329,6 +361,7 @@ const Detail = () => {
     idorders,
     name,
     image,
+    type,
     description,
     attributes,
     viewCount,
@@ -340,6 +373,7 @@ const Detail = () => {
   const usdPrice = useGetUsdPrice(price, unit);
 
   const isMakerOwned = useMemo(() => isSameAddress(owner, maker), [owner, maker]);
+  const isMine = useMemo(() => isSameAddress(owner, address), [owner, address]);
 
   const {isFavoriteOrder, onClickFavorite} = useOrderFavorite(idorders, () => {
     dispatch(fetchOrderByAddress({contractAddress: contract, tokenId: tokenId}));
@@ -370,9 +404,12 @@ const Detail = () => {
       return;
     }
 
-    getTokenInfo(contract, tokenId).then(({metadata, owner}) => {
-      setMetadata(metadata);
+    getOwnerOf(contract, tokenId).then((owner) => {
       setOwner(owner);
+    });
+
+    getTokenInfo(contract, tokenId).then(({metadata}) => {
+      setMetadata(metadata);
     });
 
     if (isSameAddress(contract, commonCollection.contract)) {
@@ -386,6 +423,7 @@ const Detail = () => {
     }
 
     dispatch(fetchOrderByAddress({contractAddress: contract, tokenId: tokenId}));
+    setFetch(false);
   }, [contract, tokenId, fetch]);
 
   const {properties, levels} = useMemo(() => {
@@ -394,26 +432,15 @@ const Detail = () => {
       levels: []
     };
 
-    if (attributes && attributes.length > 0) {
-      const entries = Object.entries(attributes[0]);
-
-      for (let [k, v] of entries) {
-        if (k === 'level' && Array.isArray(v)) {
-          for (let level of v) {
-            for (let key in level) {
-              result.levels.push({
-                name: key,
-                level: level[key][0],
-                max: level[key][1]
-              });
-            }
-          }
+    if (Array.isArray(attributes)) {
+      attributes.forEach((v) => {
+        if (typeof v.value === 'number') {
+          result.levels.push(v);
         } else {
-          result.properties.push({key: k, value: v});
+          result.properties.push(v);
         }
-      }
+      });
     }
-
     return result;
   }, [attributes]);
 
@@ -450,12 +477,65 @@ const Detail = () => {
   }, [owner]);
 
   const handleBuy = useCallback(() => {
-    setOrderType(ORDER_TYPE_CHECKOUT);
-  }, []);
+    checkValidAccessToken(history, dispatch, () => {
+      setOrderType(ORDER_TYPE_CHECKOUT);
+    });
+  }, [history, dispatch]);
 
   const handleRefresh = useCallback(() => {
     setFetch(true);
   }, []);
+
+  const handleCancelListing = useCallback(() => {
+    alert.show({
+      title: 'Are you sure you want to cancel your listing?',
+      text: 'Canceling your listing will unpublish this sale from NFTon.',
+      confirmText: 'Cancel listing',
+      cancelText: 'Never mind',
+      onConfirm: () => {
+        dispatch(cancelOrder({idorders: idorders})).then(({payload, error}) => {
+          if(error) {
+            alert.error(error.message);
+          } else if(!payload?.success) {
+            alert.error(payload?.message)
+          } else {
+            alert.show(t('CANCEL_ORDER_SUCCESS'));
+            handleRefresh();
+          }
+        })
+      }
+    });
+  }, [idorders, handleRefresh]);
+
+  const handleDelete = useCallback(() => {
+    alert.show({
+      title: 'Delete item',
+      text: 'Are you sure you want to delete this item?',
+      confirmText: 'Delete item',
+      cancelText: 'Never mind',
+      onConfirm: () => {
+        // TODO: Delete item
+        window.alert('delete');
+      }
+    });
+  }, []);
+
+  const toggleListingModal = useCallback(() => {
+    if(showListingModal) {
+      handleRefresh();
+    }
+
+    setShowListingModal(!showListingModal);
+  }, [showListingModal, handleRefresh]);
+
+
+  const toggleLowerPrice = useCallback(() => {
+    if(showLowerModal) {
+      handleRefresh();
+    }
+
+    setShowLowerModal(!showLowerModal);
+  }, [showLowerModal, handleRefresh]);
 
   const cancelOrderProgress = () => {
     setOrderType(null);
@@ -464,8 +544,25 @@ const Detail = () => {
   return (
     <PageWrapper hasTopNav>
       <GradientTop color={"#929292"}/>
+      {
+        isMine && (
+          <SellerControl>
+            {
+              isMakerOwned ? <>
+                <Button white onClick={handleCancelListing}>Cancel listing</Button>
+                <Button accent onClick={toggleLowerPrice}>Lower price</Button>
+              </> : <>
+                {/*<Button white onClick={handleDelete}>Delete</Button>*/}
+                <Button accent onClick={toggleListingModal}>Sell</Button>
+              </>
+            }
+          </SellerControl>
+        )
+      }
       <Header>
-        <ItemImage src={image}/>
+        <ItemPreview>
+          <ContentPreview type={type} src={image} controls/>
+        </ItemPreview>
         <ItemSummary>
           <FlexBox>
             <CollectionName>
@@ -501,7 +598,11 @@ const Detail = () => {
                 <PriceWrapper>
                   {/*<img src={"/img/symbol_ton.svg"}/>*/}
                   <div className="price">{price}</div>
-                  <div className="usd">${usdPrice}</div>
+                  {
+                    !!usdPrice && (
+                      <div className="usd">${usdPrice}</div>
+                    )
+                  }
                   <div className="fee">
                     + {feeRatio * 100}%
                     <div className={"tooltip"}>
@@ -515,7 +616,7 @@ const Detail = () => {
                   {/*<img src={"/img/ic_detail_unit_arrowdown.svg"}/>*/}
                 </FlexBox>
                 {
-                  isMakerOwned && (
+                  (isMakerOwned && !isMine) && (
                     <FlexBox className="buttons">
                       <Button accent onClick={handleBuy}>Buy Now</Button>
                       {/*<Button>Make offer</Button>*/}
@@ -532,7 +633,7 @@ const Detail = () => {
                 <label>Owned by</label>
                 <Link to={"/profile/" + ownedBy?.address}>
                   {ownedBy?.name}
-                  <img src={ownedBy?.photo}/>
+                  <ProfileImage src={ownedBy?.photo}/>
                 </Link>
               </OwnerWrapper>
             )
@@ -546,8 +647,7 @@ const Detail = () => {
             <PropertiesGrid>
               {
                 properties.map((x, i) => (
-                  <Property key={i} type={x.key}
-                            name={typeof x.value === 'string' ? x.value : JSON.stringify(x.value)}/>
+                  <Property key={i} type={x.trait_type} value={x.value}/>
                 ))
               }
             </PropertiesGrid>
@@ -557,7 +657,7 @@ const Detail = () => {
             <div>
               {
                 levels.map((x, i) => (
-                  <Level key={i} name={x.name} level={x.level} max={x.max}/>
+                  <Level key={i} type={x.trait_type} value={x.value} max={x.max_value}/>
                 ))
               }
             </div>
@@ -601,6 +701,17 @@ const Detail = () => {
         orderType && (
           <OrderProgress order={order} feeRatio={feeRatio} orderType={orderType} onRefresh={handleRefresh}
                          onCancel={cancelOrderProgress}/>
+        )
+      }
+      {
+        showListingModal && (
+          <ListingModal visible collection={collection} tokenId={tokenId} metadata={metadata}
+                        onClose={toggleListingModal}/>
+        )
+      }
+      {
+        showLowerModal && (
+          <LowerPrice order={order} currentPrice={price} currentUnit={unit} visible onClose={toggleLowerPrice}/>
         )
       }
     </PageWrapper>

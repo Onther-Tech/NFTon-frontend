@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import {useEffect, useState} from "react";
+import {useCallback, useEffect, useMemo, useState} from "react";
 import {Button, ButtonList} from "./ModalButton";
 import useGetUsdPrice from "../../../hooks/useGetPrice";
 
@@ -150,6 +150,10 @@ const UsdValue = styled.span`
 const BidOrCheckout = ({checkout, content, onClose, onConfirm}) => {
   const [bidValue, setBidValue] = useState('');
 
+  const disableContinue = useMemo(() => {
+    return content.balance < content.total;
+  }, [content]);
+
   const usdTotalPay = useGetUsdPrice(content.total, content.unit);
 
   useEffect(() => {
@@ -157,6 +161,12 @@ const BidOrCheckout = ({checkout, content, onClose, onConfirm}) => {
       setBidValue(' ');
     }
   }, [checkout]);
+
+  const handleConfirm = useCallback((e) => {
+    if(!disableContinue && onConfirm) {
+      onConfirm(e);
+    }
+  }, [disableContinue, onConfirm]);
 
   return (
     <>
@@ -213,7 +223,7 @@ const BidOrCheckout = ({checkout, content, onClose, onConfirm}) => {
         </Total>
       </AmountWrapper>
       <ButtonList>
-        {bidValue != '' && <Button onClick={onConfirm}>Continue</Button>}
+        {bidValue != '' && <Button disabled={disableContinue} onClick={handleConfirm}>Continue</Button>}
         {bidValue == '' && <Button className="disabled" onClick={onClose}>Cancel</Button>}
       </ButtonList>
     </>

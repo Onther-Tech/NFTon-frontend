@@ -5,7 +5,7 @@ import {useDispatch, useSelector} from "react-redux";
 import {accessToken, userActions, userState} from "../reducers/user";
 import {useCallback, useEffect} from "react";
 import {useHistory} from "react-router-dom";
-import {getAddress, isMetaMask, personalSign, requestAccounts} from "../utils/metamask";
+import {getAddress, isMetaMask, personalSign, requestAccounts, isValidNetwork} from "../utils/metamask";
 import {soliditySha3} from 'web3-utils';
 import {hasAccessToken, setAccessToken} from "../utils/user";
 import {setAuthorization} from "../utils/axios";
@@ -60,19 +60,25 @@ const Connect = () => {
     }
 
     if (hasAccessToken(user.address)) {
-      if (history.action === 'POP') {
-        history.replace('/');
+      if (history.location.state?.origin) {
+        history.replace(history.location.state.origin);
       } else {
-        history.goBack();
+        history.replace('/');
       }
     } else {
-      dispatch(userActions.clearAddress);
+      dispatch(userActions.clearUser());
     }
-  }, [user, history]);
+  }, [user]);
 
   const handleConnectMetamask = useCallback(() => {
     if (!isMetaMask()) {
       alert.error(t('METAMASK_NOT_INSTALLED'));
+      window.open('https://chrome.google.com/webstore/detail/metamask/nkbihfbeogaeaoehlefnkodbefgpgknn', '_blank');
+      return;
+    }
+
+    if(!isValidNetwork()) {
+      alert.error(t('WALLET_NETWORK_NOT_VALID'));
       return;
     }
 
