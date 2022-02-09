@@ -125,7 +125,7 @@ export const filterByPriceRange = (arr, from, to) => {
 export const filterAndSortList = (list, filter, sortType, searchText) => {
   let arr = [...list];
 
-  console.log(filter);
+  // console.log(filter);
 
   if (searchText) {
     arr = filterByName(arr, searchText);

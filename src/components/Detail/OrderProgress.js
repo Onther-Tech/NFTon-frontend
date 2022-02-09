@@ -114,7 +114,7 @@ const OrderProgress = ({order, feeRatio, orderType, onCancel}) => {
           return;
         }
 
-        console.log(payload);
+        // console.log(payload);
 
         setOrderStep(ORDER_STEP_SUCCESS);
         dispatch(orderActions.clearOrder());
