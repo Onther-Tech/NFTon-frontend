@@ -97,12 +97,12 @@ const Marketplace = () => {
     }
   }, [idprofiles]);
 
-  const [infiniteRef] = useInfiniteScroll({
-    loading: loading,
-    hasNextPage: false,
-    onLoadMore: () => {
-    },
-  });
+  // const [infiniteRef] = useInfiniteScroll({
+  //   loading: loading,
+  //   hasNextPage: false,
+  //   onLoadMore: () => {
+  //   },
+  // });
 
   return (
     <PageWrapper hasTopNav>

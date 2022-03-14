@@ -46,7 +46,7 @@ const Home = () => {
 
       history.replace({pathname, search: qs.stringify({...searchObj, tab: tabItems[0].tab})})
     }
-  }, [tabItems, currentCategory, search]);
+  }, [tabItems, currentCategory, search, history, pathname]);
 
   useEffect(() => {
     if (tab === HOME_TAB_NEW_NFTS) {
@@ -58,7 +58,7 @@ const Home = () => {
     } else if (tab === HOME_TAB_HOT_COLLECTIONS) {
       dispatch(fetchHotCollections());
     }
-  }, [tab]);
+  }, [dispatch, tab]);
 
   useEffect(() => {
     if(tab !== HOME_TAB_HOT_COLLECTIONS) {
